@@ -8,6 +8,7 @@ import ProviderDashboard from './components/ProviderDashboard';
 import AppointmentList from './components/AppointmentList';
 import ChatPanel from './components/ChatPanel';
 import Chatbot from './components/Chatbot';
+import AuthView from './components/AuthView';
 import { Search, MapPin, Star, Phone, MessageSquare, Shield, HelpCircle } from 'lucide-react';
 import { Profile, getDistanceKm } from './services/db';
 
@@ -26,7 +27,7 @@ const MainAppContent: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDetailProfile, setSelectedDetailProfile] = useState<Profile | null>(null);
 
-  // Limpiar el perfil seleccionado al cambiar de pestaña
+  // Limpiar el perfil seleccionado al cambiar de pestaña o de rol
   useEffect(() => {
     setSelectedDetailProfile(null);
   }, [currentView, role]);
@@ -40,7 +41,7 @@ const MainAppContent: React.FC = () => {
       return false;
     }
 
-    // Filtro por Texto (Nombre o Biografía)
+    // Filtro por Texto (Nombre o Biografía o Categoría)
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       const matchName = p.name.toLowerCase().includes(q);
@@ -98,7 +99,7 @@ const MainAppContent: React.FC = () => {
                 <h3 style={{ fontSize: '1.1rem', color: 'white' }}>Filtros de Búsqueda</h3>
                 
                 {/* Búsqueda por Texto */}
-                <div className="search-input-group">
+                <div className="search-input-group" style={{ margin: 0 }}>
                   <Search size={18} />
                   <input
                     type="text"
@@ -110,7 +111,7 @@ const MainAppContent: React.FC = () => {
                   />
                 </div>
 
-                {/* Filtro por Especialidad */}
+                {/* Filtro por Especialidad y Distancia */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                   <select
                     className="filter-select"
@@ -127,7 +128,6 @@ const MainAppContent: React.FC = () => {
                     <option value="pintura">Pintura</option>
                   </select>
 
-                  {/* Filtro por Distancia */}
                   <select
                     className="filter-select"
                     value={searchDistance}
@@ -219,6 +219,9 @@ const MainAppContent: React.FC = () => {
 
       case 'chats':
         return <ChatPanel />;
+
+      case 'auth':
+        return <AuthView />;
 
       default:
         return <LandingPage />;

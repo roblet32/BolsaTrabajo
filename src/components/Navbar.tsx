@@ -1,9 +1,10 @@
 import React from 'react';
-import { Briefcase, Map, Calendar, MessageSquare, Home, Shield } from 'lucide-react';
+import { Briefcase, Map, Calendar, MessageSquare, Home, LogIn, LogOut, User } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { isSupabaseConfigured } from '../services/supabaseClient';
 
 export const Navbar: React.FC = () => {
-  const { currentView, setCurrentView, role, setUserRole, user } = useApp();
+  const { currentView, setCurrentView, role, setUserRole, user, signOut } = useApp();
 
   return (
     <header className="app-header">
@@ -33,9 +34,16 @@ export const Navbar: React.FC = () => {
           <span>{role === 'cliente' ? 'Buscar Servicios' : 'Mi Ubicación'}</span>
         </button>
 
+        {/* Citas y Mensajes solo accesibles si está logueado en modo real */}
         <button
           className={`nav-item ${currentView === 'citas' ? 'active' : ''}`}
-          onClick={() => setCurrentView('citas')}
+          onClick={() => {
+            if (!user && isSupabaseConfigured) {
+              setCurrentView('auth');
+            } else {
+              setCurrentView('citas');
+            }
+          }}
           id="nav_btn_citas"
         >
           <Calendar size={18} />
@@ -44,7 +52,13 @@ export const Navbar: React.FC = () => {
 
         <button
           className={`nav-item ${currentView === 'chats' ? 'active' : ''}`}
-          onClick={() => setCurrentView('chats')}
+          onClick={() => {
+            if (!user && isSupabaseConfigured) {
+              setCurrentView('auth');
+            } else {
+              setCurrentView('chats');
+            }
+          }}
           id="nav_btn_chats"
         >
           <MessageSquare size={18} />
@@ -53,37 +67,64 @@ export const Navbar: React.FC = () => {
       </nav>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-        {/* Indicador de Usuario Activo */}
-        {user && (
-          <div style={{ textAlign: 'right', display: 'none' }} className="d-md-block">
-            <div style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{user.name}</div>
-            <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
-              {user.role === 'prestador' ? 'Prestador' : 'Cliente'}
+        
+        {/* Indicador de Usuario Activo en pantalla grande */}
+        {user ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ textAlign: 'right', display: 'none' }} className="d-md-block">
+              <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'white' }}>{user.name}</div>
+              <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
+                {user.role === 'prestador' ? 'Prestador' : 'Cliente'}
+              </div>
             </div>
-          </div>
-        )}
 
-        {/* Switcher de Roles para Demostración */}
-        <div className="role-switcher-container">
+            {/* Switcher de Roles (para pruebas rápidas en local o cambiar tu perfil de prestador/cliente) */}
+            <div className="role-switcher-container">
+              <button
+                className={`role-btn ${role === 'cliente' ? 'active-client' : ''}`}
+                onClick={() => setUserRole('cliente')}
+                title="Cambiar a rol de Cliente"
+                id="role_switch_cliente"
+              >
+                Cliente
+              </button>
+              <button
+                className={`role-btn ${role === 'prestador' ? 'active-provider' : ''}`}
+                onClick={() => setUserRole('prestador')}
+                title="Cambiar a rol de Prestador"
+                id="role_switch_prestador"
+              >
+                Prestador
+              </button>
+            </div>
+
+            {/* Botón Salir */}
+            <button
+              className="btn-secondary"
+              onClick={signOut}
+              title="Cerrar Sesión"
+              style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+              id="nav_btn_logout"
+            >
+              <LogOut size={16} />
+              <span className="d-none d-md-inline">Salir</span>
+            </button>
+          </div>
+        ) : (
+          /* Botón Ingresar para Invitados */
           <button
-            className={`role-btn ${role === 'cliente' ? 'active-client' : ''}`}
-            onClick={() => setUserRole('cliente')}
-            title="Cambiar a rol de Cliente"
-            id="role_switch_cliente"
+            className="btn-primary"
+            onClick={() => setCurrentView('auth')}
+            style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+            id="nav_btn_login"
           >
-            Cliente
+            <LogIn size={16} />
+            <span>Iniciar Sesión</span>
           </button>
-          <button
-            className={`role-btn ${role === 'prestador' ? 'active-provider' : ''}`}
-            onClick={() => setUserRole('prestador')}
-            title="Cambiar a rol de Prestador"
-            id="role_switch_prestador"
-          >
-            Prestador
-          </button>
-        </div>
+        )}
       </div>
     </header>
   );
 };
+
 export default Navbar;

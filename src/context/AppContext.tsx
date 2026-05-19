@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { db, Profile, Appointment, ChatMessage } from '../services/db';
+import { supabase, isSupabaseConfigured } from '../services/supabaseClient';
 
 interface AppContextType {
   user: Profile | null;
@@ -8,10 +9,11 @@ interface AppContextType {
   appointments: Appointment[];
   activeContact: Profile | null;
   messages: ChatMessage[];
-  currentView: 'inicio' | 'mapa' | 'perfil' | 'citas' | 'chats';
+  currentView: 'inicio' | 'mapa' | 'perfil' | 'citas' | 'chats' | 'auth';
   searchCategory: string;
   searchDistance: number;
   clientLocation: { lat: number; lng: number };
+  isAuthLoading: boolean;
   setUserRole: (role: 'cliente' | 'prestador') => void;
   loginAs: (profileId: string) => Promise<void>;
   updateUserProfile: (updated: Partial<Profile>) => Promise<void>;
@@ -19,12 +21,15 @@ interface AppContextType {
   refreshAppointments: () => Promise<void>;
   setActiveContact: (profile: Profile | null) => void;
   sendChat: (content: string) => Promise<void>;
-  setCurrentView: (view: 'inicio' | 'mapa' | 'perfil' | 'citas' | 'chats') => void;
+  setCurrentView: (view: 'inicio' | 'mapa' | 'perfil' | 'citas' | 'chats' | 'auth') => void;
   setSearchCategory: (cat: string) => void;
   setSearchDistance: (dist: number) => void;
   setClientLocation: (loc: { lat: number; lng: number }) => void;
   bookService: (prestadorId: string, prestadorName: string, date: string, time: string, notes: string) => Promise<Appointment>;
   submitReview: (prestadorId: string, score: number, comment: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string, role: 'cliente' | 'prestador', phone: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -52,45 +57,104 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [activeContact, setActiveContact] = useState<Profile | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [currentView, setCurrentView] = useState<'inicio' | 'mapa' | 'perfil' | 'citas' | 'chats'>('inicio');
+  const [currentView, setCurrentView] = useState<'inicio' | 'mapa' | 'perfil' | 'citas' | 'chats' | 'auth'>('inicio');
   const [searchCategory, setSearchCategory] = useState<string>('');
   const [searchDistance, setSearchDistance] = useState<number>(5); // 5km de radio por defecto
   const [clientLocation, setClientLocation] = useState<{ lat: number; lng: number }>({
     lat: 21.2185, // Plaza Principal de Jalpan
     lng: -99.4735
   });
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
-  // Cargar perfil por defecto y perfiles de proveedores
+  // Escuchar la autenticación de Supabase (o inicializar localStorage local)
   useEffect(() => {
     const initApp = async () => {
-      // Intentar cargar usuario guardado o establecer el por defecto
-      const savedUser = localStorage.getItem('b_current_user');
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser) as Profile;
-        setUser(parsed);
-        setRole(parsed.role);
-        if (parsed.role === 'cliente') {
-          setClientLocation({ lat: parsed.lat, lng: parsed.lng });
+      if (!isSupabaseConfigured || !supabase) {
+        // Fallback local
+        const savedUser = localStorage.getItem('b_current_user');
+        if (savedUser) {
+          const parsed = JSON.parse(savedUser) as Profile;
+          setUser(parsed);
+          setRole(parsed.role);
+          if (parsed.role === 'cliente') {
+            setClientLocation({ lat: parsed.lat, lng: parsed.lng });
+          }
+        } else {
+          localStorage.setItem('b_current_user', JSON.stringify(DEFAULT_CLIENT));
+          setUser(DEFAULT_CLIENT);
+          setRole('cliente');
+          setClientLocation({ lat: DEFAULT_CLIENT.lat, lng: DEFAULT_CLIENT.lng });
         }
-      } else {
-        localStorage.setItem('b_current_user', JSON.stringify(DEFAULT_CLIENT));
-        setUser(DEFAULT_CLIENT);
-        setRole('cliente');
-        setClientLocation({ lat: DEFAULT_CLIENT.lat, lng: DEFAULT_CLIENT.lng });
+        setIsAuthLoading(false);
+        await refreshProfiles();
+        return;
       }
-      
+
+      // Si Supabase está configurado, escuchar cambios de autenticación
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        setIsAuthLoading(true);
+        if (session?.user) {
+          // Buscar el perfil correspondiente al ID del usuario autenticado
+          let profile = await db.getProfileById(session.user.id);
+          
+          // Si es un usuario nuevo, el trigger de la base de datos puede tardar milisegundos en crear el perfil.
+          if (!profile) {
+            await new Promise(r => setTimeout(r, 1200)); // Esperar un poco
+            profile = await db.getProfileById(session.user.id);
+          }
+
+          if (profile) {
+            setUser(profile);
+            setRole(profile.role);
+            localStorage.setItem('b_current_user', JSON.stringify(profile));
+          } else {
+            // Fallback si por alguna razón el perfil no se creó a tiempo
+            const metadata = session.user.user_metadata;
+            const tempProfile = await db.saveProfile({
+              id: session.user.id,
+              name: metadata.name || 'Nuevo Usuario',
+              role: metadata.role || 'cliente',
+              phone: metadata.phone || '',
+              bio: 'Hola, acabo de unirme a la Bolsa de Trabajo de Jalpan.',
+              categories: [],
+              rate: 0,
+              schedule: 'Lunes a Viernes',
+              lat: 21.2185,
+              lng: -99.4735,
+              rating: 5,
+              reviewsCount: 0
+            });
+            setUser(tempProfile);
+            setRole(tempProfile.role);
+            localStorage.setItem('b_current_user', JSON.stringify(tempProfile));
+          }
+        } else {
+          setUser(null);
+          // Rol cliente por defecto para invitados
+          setRole('cliente');
+          localStorage.removeItem('b_current_user');
+        }
+        setIsAuthLoading(false);
+      });
+
       await refreshProfiles();
+
+      return () => {
+        subscription.unsubscribe();
+      };
     };
+
     initApp();
   }, []);
 
-  // Cargar citas y mensajes si cambian el usuario o el contacto activo
+  // Cargar citas si cambia el usuario
   useEffect(() => {
     if (user) {
       refreshAppointments();
     }
   }, [user]);
 
+  // Cargar mensajes si cambia el usuario o el contacto activo
   useEffect(() => {
     const loadMessages = async () => {
       if (user && activeContact) {
@@ -117,10 +181,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Alternar el rol activamente (para pruebas ágiles)
   const setUserRole = async (newRole: 'cliente' | 'prestador') => {
+    if (isSupabaseConfigured && supabase) {
+      // En modo Supabase real, el rol está guardado en el perfil. 
+      // Le permitimos cambiar el rol actualizando su registro en Supabase.
+      if (user) {
+        await updateUserProfile({ role: newRole });
+      }
+      return;
+    }
+
+    // Modo local / demostración
     if (!user) return;
-    
-    // Si cambia a prestador, iniciamos sesión como el Plomero Juan Pérez ('p1') para demostración rápida,
-    // o creamos un perfil de prestador si el usuario actual ya existe.
     if (newRole === 'prestador') {
       const prestadorDemo = await db.getProfileById('p1');
       if (prestadorDemo) {
@@ -129,7 +200,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         localStorage.setItem('b_current_user', JSON.stringify(prestadorDemo));
       }
     } else {
-      // Volver a Alejandro Gutiérrez
       let clienteDemo = await db.getProfileById('c1');
       if (!clienteDemo) {
         clienteDemo = DEFAULT_CLIENT;
@@ -143,7 +213,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentView('inicio');
   };
 
-  // Iniciar sesión como un usuario específico de la base de datos
+  // Iniciar sesión como un usuario específico de la base de datos (Demo)
   const loginAs = async (profileId: string) => {
     const profile = await db.getProfileById(profileId);
     if (profile) {
@@ -176,8 +246,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       content
     });
     setMessages(prev => [...prev, newMsg]);
-    
-    // Actualizar también la lista de contactos en segundo plano
     refreshProfiles();
   };
 
@@ -216,6 +284,85 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await refreshProfiles();
   };
 
+  // REGISTRO REAL (Supabase Auth)
+  const signUp = async (email: string, password: string, name: string, role: 'cliente' | 'prestador', phone: string) => {
+    if (!isSupabaseConfigured || !supabase) {
+      // Simular registro en LocalStorage
+      const mockId = 'mock_u_' + Math.random().toString(36).substr(2, 9);
+      const newMockProfile = await db.saveProfile({
+        id: mockId,
+        name,
+        role,
+        phone,
+        bio: 'Hola, acabo de unirme a la Bolsa de Trabajo de Jalpan (Modo Demo).',
+        categories: [],
+        rate: 0,
+        schedule: 'Lunes a Viernes',
+        lat: 21.2185,
+        lng: -99.4735,
+        rating: 5,
+        reviewsCount: 0
+      });
+      setUser(newMockProfile);
+      setRole(role);
+      localStorage.setItem('b_current_user', JSON.stringify(newMockProfile));
+      return;
+    }
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+          role,
+          phone
+        }
+      }
+    });
+
+    if (error) throw error;
+  };
+
+  // INICIO DE SESIÓN REAL (Supabase Auth)
+  const signIn = async (email: string, password: string) => {
+    if (!isSupabaseConfigured || !supabase) {
+      // Simular login en LocalStorage buscando por email/nombre
+      const nameFromEmail = email.split('@')[0];
+      const profilesList = await db.getProfiles();
+      const found = profilesList.find(p => p.name.toLowerCase().includes(nameFromEmail.toLowerCase()));
+      if (found) {
+        setUser(found);
+        setRole(found.role);
+        localStorage.setItem('b_current_user', JSON.stringify(found));
+      } else {
+        setUser(DEFAULT_CLIENT);
+        setRole('cliente');
+        localStorage.setItem('b_current_user', JSON.stringify(DEFAULT_CLIENT));
+      }
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) throw error;
+  };
+
+  // CERRAR SESIÓN REAL (Supabase Auth)
+  const signOut = async () => {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.auth.signOut();
+      if (error) console.error(error);
+    } else {
+      setUser(null);
+      localStorage.removeItem('b_current_user');
+    }
+    setCurrentView('inicio');
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -229,6 +376,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         searchCategory,
         searchDistance,
         clientLocation,
+        isAuthLoading,
         setUserRole,
         loginAs,
         updateUserProfile,
@@ -241,7 +389,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSearchDistance,
         setClientLocation,
         bookService,
-        submitReview
+        submitReview,
+        signUp,
+        signIn,
+        signOut
       }}
     >
       {children}

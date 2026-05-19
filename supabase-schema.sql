@@ -1,8 +1,4 @@
--- =====================================================================
--- SCRIPT DE CONFIGURACIÓN DE BASE DE DATOS: BOLSA DE TRABAJO JALPAN
--- =====================================================================
--- Copia y pega este script completo en el editor SQL de tu panel de Supabase
--- para crear todas las tablas, relaciones, disparadores y políticas de seguridad.
+-- CONFIGURACIÓN DE BASE DE DATOS: BOLSA DE TRABAJO JALPAN
 
 -- 1. TABLA DE PERFILES (Vinculada a la autenticación central de Supabase)
 create table public.profiles (
@@ -108,9 +104,7 @@ create policy "Usuarios pueden enviar mensajes"
   with check (auth.uid() = sender_id);
 
 
--- =====================================================================
 -- DISPARADORES AUTOMÁTICOS (TRIGGERS)
--- =====================================================================
 
 -- Función para insertar automáticamente un perfil al registrar una cuenta de Supabase Auth
 create or replace function public.handle_new_user()

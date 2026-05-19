@@ -59,6 +59,10 @@ export const ProfileDetail: React.FC<ProfileDetailProps> = ({ profile, onBack })
   };
 
   const handleChat = () => {
+    if (!user) {
+      setCurrentView('auth');
+      return;
+    }
     setActiveContact(profile);
     setCurrentView('chats');
   };
@@ -133,63 +137,81 @@ export const ProfileDetail: React.FC<ProfileDetailProps> = ({ profile, onBack })
             </button>
           </div>
 
-          {/* Formulario de Cita */}
-          {user?.id !== profile.id && user?.role === 'cliente' && (
-            <div className="glass-card" style={{ padding: '1.75rem' }}>
-              <h3 style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Calendar size={20} style={{ color: 'var(--primary-light)' }} />
-                Agendar una Cita
-              </h3>
-
-              {apptSuccess ? (
-                <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid var(--success)', padding: '1rem', borderRadius: '8px', color: 'white', fontSize: '0.9rem' }}>
-                  🎉 **¡Cita Solicitada con Éxito!** El profesional ha sido notificado y la podrás ver en tu pestaña de Citas. Te responderá por el chat.
-                </div>
-              ) : (
-                <form onSubmit={handleBook} className="appointment-form">
-                  <div className="form-group">
-                    <label>Fecha del Servicio</label>
-                    <input
-                      type="date"
-                      required
-                      className="form-control"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
-                      id="input_appt_date"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Hora Tentativa</label>
-                    <input
-                      type="time"
-                      required
-                      className="form-control"
-                      value={time}
-                      onChange={(e) => setTime(e.target.value)}
-                      id="input_appt_time"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Descripción del Trabajo</label>
-                    <textarea
-                      rows={3}
-                      placeholder="Ej. Reparar gotera en baño, cotizar cortocircuito en cocina..."
-                      className="form-control"
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      id="input_appt_notes"
-                    />
-                  </div>
-
-                  <button type="submit" className="btn-primary" style={{ width: '100%' }} id="btn_submit_appt">
-                    Confirmar Contratación
-                  </button>
-                </form>
-              )}
+          {/* Formulario de Cita o Promoción de Auth */}
+          {!user ? (
+            <div className="glass-card" style={{ padding: '1.75rem', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <Calendar size={32} style={{ margin: '0 auto', color: 'var(--primary-light)' }} />
+              <h3 style={{ fontSize: '1.1rem', color: 'white' }}>¿Quieres agendar una cita?</h3>
+              <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                Inicia sesión para contratar servicios de plomería, electricidad o carpintería de forma directa y 100% segura.
+              </p>
+              <button 
+                className="btn-primary" 
+                style={{ width: '100%', padding: '0.65rem' }} 
+                onClick={() => setCurrentView('auth')}
+                id="btn_auth_promo_book"
+              >
+                Iniciar Sesión
+              </button>
             </div>
+          ) : (
+            user.id !== profile.id && user.role === 'cliente' && (
+              <div className="glass-card" style={{ padding: '1.75rem' }}>
+                <h3 style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Calendar size={20} style={{ color: 'var(--primary-light)' }} />
+                  Agendar una Cita
+                </h3>
+
+                {apptSuccess ? (
+                  <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid var(--success)', padding: '1rem', borderRadius: '8px', color: 'white', fontSize: '0.9rem' }}>
+                    🎉 **¡Cita Solicitada con Éxito!** El profesional ha sido notificado y la podrás ver en tu pestaña de Citas. Te responderá por el chat.
+                  </div>
+                ) : (
+                  <form onSubmit={handleBook} className="appointment-form">
+                    <div className="form-group">
+                      <label>Fecha del Servicio</label>
+                      <input
+                        type="date"
+                        required
+                        className="form-control"
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                        id="input_appt_date"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Hora Tentativa</label>
+                      <input
+                        type="time"
+                        required
+                        className="form-control"
+                        value={time}
+                        onChange={(e) => setTime(e.target.value)}
+                        id="input_appt_time"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Descripción del Trabajo</label>
+                      <textarea
+                        rows={3}
+                        placeholder="Ej. Reparar gotera en baño, cotizar cortocircuito en cocina..."
+                        className="form-control"
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        id="input_appt_notes"
+                      />
+                    </div>
+
+                    <button type="submit" className="btn-primary" style={{ width: '100%' }} id="btn_submit_appt">
+                      Confirmar Contratación
+                    </button>
+                  </form>
+                )}
+              </div>
+            )
           )}
         </div>
 
@@ -305,4 +327,5 @@ export const ProfileDetail: React.FC<ProfileDetailProps> = ({ profile, onBack })
     </div>
   );
 };
+
 export default ProfileDetail;
