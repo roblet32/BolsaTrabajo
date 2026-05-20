@@ -76,7 +76,7 @@ export const ServiceMap: React.FC<ServiceMapProps> = ({
   filteredProfiles,
   onSelectProfile
 }) => {
-  const { clientLocation, searchDistance, setActiveContact, setCurrentView } = useApp();
+  const { clientLocation, searchDistance, setActiveContact, setCurrentView, theme } = useApp();
 
   const handleQuickChat = (p: Profile, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -92,15 +92,31 @@ export const ServiceMap: React.FC<ServiceMapProps> = ({
         scrollWheelZoom={true}
         style={{ height: '100%', width: '100%', borderRadius: '16px' }}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        {(() => {
+          const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || '';
+          if (mapboxToken) {
+            const styleId = theme === 'light' ? 'light-v11' : 'dark-v11';
+            return (
+              <TileLayer
+                attribution='Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>'
+                url={`https://api.mapbox.com/styles/v1/mapbox/${styleId}/tiles/{z}/{x}/{y}?access_token=${mapboxToken}`}
+              />
+            );
+          } else {
+            const cartoStyle = theme === 'light' ? 'voyager' : 'dark_all';
+            return (
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                url={`https://{s}.basemaps.cartocdn.com/rastertiles/${cartoStyle}/{z}/{x}/{y}{r}.png`}
+              />
+            );
+          }
+        })()}
 
         {/* Marcador del Cliente */}
         <Marker position={[clientLocation.lat, clientLocation.lng]} icon={clientIcon}>
           <Popup>
-            <div style={{ color: 'black', fontWeight: 'bold' }}>Tu Ubicación Actual</div>
+            <div style={{ color: 'var(--text-dark-primary)', fontWeight: 'bold' }}>Tu Ubicación Actual</div>
           </Popup>
         </Marker>
 
@@ -133,8 +149,8 @@ export const ServiceMap: React.FC<ServiceMapProps> = ({
               icon={getProviderIcon(p.categories)}
             >
               <Popup>
-                <div style={{ minWidth: '180px', color: 'white', padding: '0.2rem' }}>
-                  <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.95rem', color: '#f8fafc', fontWeight: 'bold' }}>
+                <div style={{ minWidth: '180px', color: 'var(--text-dark-primary)', padding: '0.2rem' }}>
+                  <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.95rem', color: 'var(--text-dark-primary)', fontWeight: 'bold' }}>
                     {p.name}
                   </h4>
                   <div style={{ fontSize: '0.75rem', textTransform: 'capitalize', color: '#14b8a6', fontWeight: '700', marginBottom: '0.25rem' }}>

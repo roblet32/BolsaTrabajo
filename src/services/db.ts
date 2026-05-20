@@ -1,8 +1,8 @@
-import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { supabase, isSupabaseConfigured, withTimeout } from './supabaseClient';
 
 export interface Profile {
   id: string;
-  role: 'prestador' | 'cliente';
+  role: 'prestador' | 'cliente' | 'admin';
   name: string;
   phone: string;
   bio: string;
@@ -13,6 +13,9 @@ export interface Profile {
   lng: number;
   rating: number;
   reviewsCount: number;
+  isActive?: boolean;
+  email?: string;
+  workPhotos?: string[];
 }
 
 export interface Appointment {
@@ -45,157 +48,10 @@ export interface ChatMessage {
   timestamp: string;
 }
 
-// Datos semilla realistas para Jalpan de Serra, Querétaro
-// Coordenadas centrales de Jalpan: 21.2185, -99.4735
-const SEED_PROFILES: Profile[] = [
-  {
-    id: 'p1',
-    role: 'prestador',
-    name: 'Juan Pérez Ramos',
-    phone: '4411051234',
-    bio: 'Plomero certificado con más de 12 años de experiencia. Reparación de fugas, tinacos, cisternas, instalaciones de gas y grifería en general. Servicio rápido y garantizado.',
-    categories: ['plomería'],
-    rate: 130,
-    schedule: 'Lunes a Sábado: 8:00 AM - 6:00 PM',
-    lat: 21.2198,
-    lng: -99.4725, // Cerca de la Plaza Principal
-    rating: 4.8,
-    reviewsCount: 15
-  },
-  {
-    id: 'p2',
-    role: 'prestador',
-    name: 'María Rodríguez Castillo',
-    phone: '4411129876',
-    bio: 'Electricista residencial e industrial. Cortocircuitos, cableado estructurado, instalación de lámparas, ventiladores y centros de carga. Emergencias las 24 horas.',
-    categories: ['electricidad'],
-    rate: 160,
-    schedule: 'Lunes a Viernes: 9:00 AM - 7:00 PM (Sábados Emergencias)',
-    lat: 21.2220,
-    lng: -99.4750, // Cerca del Barrio Capulines
-    rating: 4.9,
-    reviewsCount: 19
-  },
-  {
-    id: 'p3',
-    role: 'prestador',
-    name: 'Carlos Mendoza Solís',
-    phone: '4411084422',
-    bio: 'Carpintero y ebanista artesanal. Fabricación y reparación de puertas, clósets, cocinas integrales y muebles rústicos. Restauración de piezas de madera fina.',
-    categories: ['carpintería'],
-    rate: 150,
-    schedule: 'Lunes a Sábado: 8:00 AM - 5:00 PM',
-    lat: 21.2150,
-    lng: -99.4710, // Barrio de la Cruz
-    rating: 4.7,
-    reviewsCount: 10
-  },
-  {
-    id: 'p4',
-    role: 'prestador',
-    name: 'Sofía Gómez Estrada',
-    phone: '4411025599',
-    bio: 'Cerrajera profesional. Apertura de cerraduras de casas y autos sin dañar. Duplicado de llaves de alta seguridad, instalación de chapas inteligentes y candados.',
-    categories: ['cerrajería'],
-    rate: 110,
-    schedule: 'Servicio 24/7 disponible para emergencias',
-    lat: 21.2250,
-    lng: -99.4690, // Colonia El Panteón
-    rating: 4.6,
-    reviewsCount: 8
-  },
-  {
-    id: 'p5',
-    role: 'prestador',
-    name: 'Pedro Torres Luna',
-    phone: '4411153311',
-    bio: 'Especialista en jardinería, paisajismo y control de plagas. Poda estética de árboles, mantenimiento de pasto, sistemas de riego e instalación de plantas de la región.',
-    categories: ['jardinería'],
-    rate: 95,
-    schedule: 'Lunes a Sábado: 7:00 AM - 4:00 PM',
-    lat: 21.2110,
-    lng: -99.4780, // Rumbo a El Embocadero
-    rating: 4.5,
-    reviewsCount: 12
-  },
-  {
-    id: 'p6',
-    role: 'prestador',
-    name: 'Ana Lilia Martínez Ruiz',
-    phone: '4411067788',
-    bio: 'Pintura residencial y comercial. Acabados finos, aplicación de impermeabilizantes para techos y fachadas, rotulación básica y restauración de muros húmedos.',
-    categories: ['pintura'],
-    rate: 120,
-    schedule: 'Lunes a Viernes: 8:00 AM - 6:00 PM',
-    lat: 21.2215,
-    lng: -99.4705, // Colonia El Lindero
-    rating: 4.9,
-    reviewsCount: 14
-  }
-];
-
-const SEED_REVIEWS: Review[] = [
-  {
-    id: 'r1',
-    clienteId: 'c1',
-    clienteName: 'Alejandro Gutiérrez',
-    prestadorId: 'p1',
-    score: 5,
-    comment: 'Excelente servicio. Llegó muy rápido y reparó la fuga del tinaco con herramientas profesionales. Muy recomendado en Jalpan.',
-    date: '2026-05-10T14:30:00Z'
-  },
-  {
-    id: 'r2',
-    clienteId: 'c2',
-    clienteName: 'Diana Laura Trejo',
-    prestadorId: 'p1',
-    score: 4,
-    comment: 'Muy atento y limpio en su trabajo. Cobró lo justo por cambiar la llave de la cocina.',
-    date: '2026-05-12T10:15:00Z'
-  },
-  {
-    id: 'r3',
-    clienteId: 'c1',
-    clienteName: 'Alejandro Gutiérrez',
-    prestadorId: 'p2',
-    score: 5,
-    comment: 'Instaló el centro de carga en mi negocio de forma impecable. Súper profesional y con altos estándares de seguridad.',
-    date: '2026-05-15T18:00:00Z'
-  },
-  {
-    id: 'r4',
-    clienteId: 'c3',
-    clienteName: 'Roberto Cabrera',
-    prestadorId: 'p3',
-    score: 5,
-    comment: 'Carlos restauró una mesa de comedor antigua y quedó hermosa. Verdadero trabajo artesanal.',
-    date: '2026-05-08T16:45:00Z'
-  }
-];
-
-const SEED_CHATS: ChatMessage[] = [
-  {
-    id: 'm1',
-    senderId: 'c1',
-    receiverId: 'p1',
-    content: 'Hola Juan, buenas tardes. ¿Tiene disponibilidad para revisar una fuga de agua en el centro?',
-    timestamp: '2026-05-18T16:00:00.000Z'
-  },
-  {
-    id: 'm2',
-    senderId: 'p1',
-    receiverId: 'c1',
-    content: 'Hola buenas tardes. Sí claro, en unos 30 minutos me desocupo y puedo ir a revisar. ¿Me podría dar su dirección exacta?',
-    timestamp: '2026-05-18T16:05:00.000Z'
-  },
-  {
-    id: 'm3',
-    senderId: 'c1',
-    receiverId: 'p1',
-    content: 'Claro, es en Calle Independencia #14, a media cuadra de la plaza. Lo espero, gracias.',
-    timestamp: '2026-05-18T16:08:00.000Z'
-  }
-];
+// Datos semilla vacíos para producción (100% datos reales registrados)
+const SEED_PROFILES: Profile[] = [];
+const SEED_REVIEWS: Review[] = [];
+const SEED_CHATS: ChatMessage[] = [];
 
 // Helper para calcular distancia en línea recta entre dos coordenadas (Haversine)
 export function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -230,19 +86,144 @@ function initLocalStorage() {
 
 initLocalStorage();
 
+// Mapeadores para traducir entre el modelo de TypeScript (camelCase) y la Base de Datos (snake_case)
+function mapProfileFromDb(data: any): Profile {
+  return {
+    id: data.id,
+    role: data.role,
+    name: data.name,
+    phone: data.phone || '',
+    bio: data.bio || '',
+    categories: data.categories || [],
+    rate: Number(data.rate || 0),
+    schedule: data.schedule || '',
+    lat: Number(data.lat ?? 21.2185),
+    lng: Number(data.lng ?? -99.4735),
+    rating: Number(data.rating ?? 5.0),
+    reviewsCount: Number(data.reviews_count ?? 0),
+    isActive: data.is_active ?? true,
+    email: data.email || '',
+    workPhotos: data.work_photos || []
+  };
+}
+
+function mapProfileToDb(profile: Partial<Profile>): any {
+  const data: any = { ...profile };
+  if ('reviewsCount' in data) {
+    data.reviews_count = data.reviewsCount;
+    delete data.reviewsCount;
+  }
+  if ('isActive' in data) {
+    data.is_active = data.isActive;
+    delete data.isActive;
+  }
+  if ('workPhotos' in data) {
+    data.work_photos = data.workPhotos;
+    delete data.workPhotos;
+  }
+  return data;
+}
+
+function mapAppointmentFromDb(data: any): Appointment {
+  return {
+    id: data.id,
+    clienteId: data.cliente_id,
+    clienteName: data.cliente_name,
+    prestadorId: data.prestador_id,
+    prestadorName: data.prestador_name,
+    date: data.date,
+    time: data.time,
+    notes: data.notes || '',
+    status: data.status
+  };
+}
+
+function mapAppointmentToDb(appt: Partial<Appointment>): any {
+  const data: any = { ...appt };
+  if ('clienteId' in data) {
+    data.cliente_id = data.clienteId;
+    delete data.clienteId;
+  }
+  if ('clienteName' in data) {
+    data.cliente_name = data.clienteName;
+    delete data.clienteName;
+  }
+  if ('prestadorId' in data) {
+    data.prestador_id = data.prestadorId;
+    delete data.prestadorId;
+  }
+  if ('prestadorName' in data) {
+    data.prestador_name = data.prestadorName;
+    delete data.prestadorName;
+  }
+  return data;
+}
+
+function mapReviewFromDb(data: any): Review {
+  return {
+    id: data.id,
+    clienteId: data.cliente_id,
+    clienteName: data.cliente_name,
+    prestadorId: data.prestador_id,
+    score: data.score,
+    comment: data.comment,
+    date: data.date
+  };
+}
+
+function mapReviewToDb(review: Partial<Review>): any {
+  const data: any = { ...review };
+  if ('clienteId' in data) {
+    data.cliente_id = data.clienteId;
+    delete data.clienteId;
+  }
+  if ('clienteName' in data) {
+    data.cliente_name = data.clienteName;
+    delete data.clienteName;
+  }
+  if ('prestadorId' in data) {
+    data.prestador_id = data.prestadorId;
+    delete data.prestadorId;
+  }
+  return data;
+}
+
+function mapChatMessageFromDb(data: any): ChatMessage {
+  return {
+    id: data.id,
+    senderId: data.sender_id,
+    receiverId: data.receiver_id,
+    content: data.content,
+    timestamp: data.timestamp
+  };
+}
+
+function mapChatMessageToDb(msg: Partial<ChatMessage>): any {
+  const data: any = { ...msg };
+  if ('senderId' in data) {
+    data.sender_id = data.senderId;
+    delete data.senderId;
+  }
+  if ('receiverId' in data) {
+    data.receiver_id = data.receiverId;
+    delete data.receiverId;
+  }
+  return data;
+}
+
 // Interfaz pública unificada del adaptador de base de datos
 export const db = {
   // --- PERFILES Y PRESTADORES ---
   async getProfiles(category?: string): Promise<Profile[]> {
     if (isSupabaseConfigured && supabase) {
       try {
-        let query = supabase.from('profiles').select('*');
+        let query = supabase.from('profiles').select('*').eq('is_active', true);
         if (category) {
           query = query.contains('categories', [category.toLowerCase()]);
         }
-        const { data, error } = await query;
+        const { data, error } = await withTimeout(query, 2500);
         if (error) throw error;
-        return data as Profile[];
+        return (data as any[]).map(mapProfileFromDb);
       } catch (err) {
         console.error('Supabase error, usando localStorage:', err);
       }
@@ -251,20 +232,21 @@ export const db = {
     // Fallback Local
     const local = localStorage.getItem('b_profiles');
     const profiles: Profile[] = local ? JSON.parse(local) : SEED_PROFILES;
+    const activeProfiles = profiles.filter(p => p.isActive !== false);
     if (category) {
-      return profiles.filter(p => 
+      return activeProfiles.filter(p => 
         p.role === 'prestador' && 
         p.categories.some(cat => cat.toLowerCase() === category.toLowerCase())
       );
     }
-    return profiles.filter(p => p.role === 'prestador');
+    return activeProfiles.filter(p => p.role === 'prestador');
   },
 
   async getProfileById(id: string): Promise<Profile | null> {
     if (isSupabaseConfigured && supabase) {
       try {
-        const { data, error } = await supabase.from('profiles').select('*').eq('id', id).single();
-        if (!error && data) return data as Profile;
+        const { data, error } = await withTimeout(supabase.from('profiles').select('*').eq('id', id).single(), 2500);
+        if (!error && data) return mapProfileFromDb(data);
       } catch (err) {
         console.error(err);
       }
@@ -278,12 +260,12 @@ export const db = {
   async saveProfile(profile: Partial<Profile> & { id: string }): Promise<Profile> {
     if (isSupabaseConfigured && supabase) {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await withTimeout(supabase
           .from('profiles')
-          .upsert(profile)
+          .upsert(mapProfileToDb(profile))
           .select()
-          .single();
-        if (!error && data) return data as Profile;
+          .single(), 2500);
+        if (!error && data) return mapProfileFromDb(data);
         throw error;
       } catch (err) {
         console.error('Supabase error al guardar perfil, usando localStorage:', err);
@@ -312,7 +294,8 @@ export const db = {
         lat: profile.lat ?? 21.2185,
         lng: profile.lng ?? -99.4735,
         rating: profile.rating || 5.0,
-        reviewsCount: profile.reviewsCount || 0
+        reviewsCount: profile.reviewsCount || 0,
+        workPhotos: profile.workPhotos || []
       };
       profiles.push(updatedProfile);
     }
@@ -325,12 +308,12 @@ export const db = {
   async getReviews(prestadorId: string): Promise<Review[]> {
     if (isSupabaseConfigured && supabase) {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await withTimeout(supabase
           .from('ratings')
           .select('*')
-          .eq('prestadorId', prestadorId)
-          .order('date', { ascending: false });
-        if (!error && data) return data as Review[];
+          .eq('prestador_id', prestadorId)
+          .order('date', { ascending: false }), 2500);
+        if (!error && data) return (data as any[]).map(mapReviewFromDb);
       } catch (err) {
         console.error(err);
       }
@@ -350,14 +333,14 @@ export const db = {
 
     if (isSupabaseConfigured && supabase) {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await withTimeout(supabase
           .from('ratings')
-          .insert(newReview)
+          .insert(mapReviewToDb(newReview))
           .select()
-          .single();
+          .single(), 2500);
         if (!error && data) {
           await this.updateProfileStats(review.prestadorId);
-          return data as Review;
+          return mapReviewFromDb(data);
         }
       } catch (err) {
         console.error(err);
@@ -393,13 +376,13 @@ export const db = {
   async getAppointments(userId: string, role: 'cliente' | 'prestador'): Promise<Appointment[]> {
     if (isSupabaseConfigured && supabase) {
       try {
-        const field = role === 'cliente' ? 'clienteId' : 'prestadorId';
-        const { data, error } = await supabase
+        const field = role === 'cliente' ? 'cliente_id' : 'prestador_id';
+        const { data, error } = await withTimeout(supabase
           .from('appointments')
           .select('*')
           .eq(field, userId)
-          .order('date', { ascending: true });
-        if (!error && data) return data as Appointment[];
+          .order('date', { ascending: true }), 2500);
+        if (!error && data) return (data as any[]).map(mapAppointmentFromDb);
       } catch (err) {
         console.error(err);
       }
@@ -421,12 +404,12 @@ export const db = {
 
     if (isSupabaseConfigured && supabase) {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await withTimeout(supabase
           .from('appointments')
-          .insert(newAppt)
+          .insert(mapAppointmentToDb(newAppt))
           .select()
-          .single();
-        if (!error && data) return data as Appointment;
+          .single(), 2500);
+        if (!error && data) return mapAppointmentFromDb(data);
       } catch (err) {
         console.error(err);
       }
@@ -442,7 +425,7 @@ export const db = {
   async updateAppointmentStatus(id: string, status: Appointment['status']): Promise<void> {
     if (isSupabaseConfigured && supabase) {
       try {
-        await supabase.from('appointments').update({ status }).eq('id', id);
+        await withTimeout(supabase.from('appointments').update({ status }).eq('id', id), 2500);
         return;
       } catch (err) {
         console.error(err);
@@ -462,12 +445,12 @@ export const db = {
   async getChats(userId1: string, userId2: string): Promise<ChatMessage[]> {
     if (isSupabaseConfigured && supabase) {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await withTimeout(supabase
           .from('chats')
           .select('*')
-          .or(`and(senderId.eq.${userId1},receiverId.eq.${userId2}),and(senderId.eq.${userId2},receiverId.eq.${userId1})`)
-          .order('timestamp', { ascending: true });
-        if (!error && data) return data as ChatMessage[];
+          .or(`and(sender_id.eq.${userId1},receiver_id.eq.${userId2}),and(sender_id.eq.${userId2},receiver_id.eq.${userId1})`)
+          .order('timestamp', { ascending: true }), 2500);
+        if (!error && data) return (data as any[]).map(mapChatMessageFromDb);
       } catch (err) {
         console.error(err);
       }
@@ -490,12 +473,12 @@ export const db = {
 
     if (isSupabaseConfigured && supabase) {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await withTimeout(supabase
           .from('chats')
-          .insert(newMsg)
+          .insert(mapChatMessageToDb(newMsg))
           .select()
-          .single();
-        if (!error && data) return data as ChatMessage;
+          .single(), 2500);
+        if (!error && data) return mapChatMessageFromDb(data);
       } catch (err) {
         console.error(err);
       }
@@ -524,5 +507,143 @@ export const db = {
     );
 
     return profilesList.filter((p): p is Profile => p !== null);
+  },
+
+  // --- MÉTODOS DE SUPER ADMIN (MODERACIÓN Y CONTROL GLOBAL) ---
+  async adminGetAllProfiles(): Promise<Profile[]> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await withTimeout(supabase.from('profiles').select('*').order('name', { ascending: true }), 2500);
+        if (error) throw error;
+        return (data as any[]).map(mapProfileFromDb);
+      } catch (err) {
+        console.error('Supabase adminGetAllProfiles error:', err);
+      }
+    }
+    
+    const local = localStorage.getItem('b_profiles');
+    return local ? JSON.parse(local) : SEED_PROFILES;
+  },
+
+  async adminGetAllReviews(): Promise<Review[]> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await withTimeout(supabase.from('ratings').select('*').order('date', { ascending: false }), 2500);
+        if (error) throw error;
+        return (data as any[]).map(mapReviewFromDb);
+      } catch (err) {
+        console.error('Supabase adminGetAllReviews error:', err);
+      }
+    }
+    
+    const local = localStorage.getItem('b_reviews');
+    return local ? JSON.parse(local) : SEED_REVIEWS;
+  },
+
+  async adminGetAllAppointments(): Promise<Appointment[]> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await withTimeout(supabase.from('appointments').select('*').order('date', { ascending: false }), 2500);
+        if (error) throw error;
+        return (data as any[]).map(mapAppointmentFromDb);
+      } catch (err) {
+        console.error('Supabase adminGetAllAppointments error:', err);
+      }
+    }
+    
+    const local = localStorage.getItem('b_appointments');
+    return local ? JSON.parse(local) : [];
+  },
+
+  async adminDeleteProfile(id: string): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        // En Supabase real, al borrar el perfil en la tabla profiles de forma directa o desde auth,
+        // depende de si está en cascade. Si borramos en public.profiles, se borrará gracias a cascade.
+        const { error } = await withTimeout(supabase.from('profiles').delete().eq('id', id), 2500);
+        if (error) throw error;
+        return;
+      } catch (err) {
+        console.error('Supabase adminDeleteProfile error:', err);
+      }
+    }
+
+    const local = localStorage.getItem('b_profiles');
+    if (local) {
+      const profiles: Profile[] = JSON.parse(local);
+      const filtered = profiles.filter(p => p.id !== id);
+      localStorage.setItem('b_profiles', JSON.stringify(filtered));
+    }
+  },
+
+  async adminToggleProfileActive(id: string, active: boolean): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error } = await withTimeout(supabase.from('profiles').update({ is_active: active }).eq('id', id), 2500);
+        if (error) throw error;
+        return;
+      } catch (err) {
+        console.error('Supabase adminToggleProfileActive error:', err);
+      }
+    }
+
+    const local = localStorage.getItem('b_profiles');
+    if (local) {
+      const profiles: Profile[] = JSON.parse(local);
+      const index = profiles.findIndex(p => p.id === id);
+      if (index >= 0) {
+        profiles[index].isActive = active;
+        localStorage.setItem('b_profiles', JSON.stringify(profiles));
+      }
+    }
+  },
+
+  async adminDeleteReview(id: string): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        // Buscar primero de qué prestador es la reseña para actualizar estadísticas
+        const { data: reviewData } = await withTimeout(supabase.from('ratings').select('prestador_id').eq('id', id).single(), 2500);
+        const { error } = await withTimeout(supabase.from('ratings').delete().eq('id', id), 2500);
+        if (error) throw error;
+
+        if (reviewData?.prestador_id) {
+          await this.updateProfileStats(reviewData.prestador_id);
+        }
+        return;
+      } catch (err) {
+        console.error('Supabase adminDeleteReview error:', err);
+      }
+    }
+
+    const local = localStorage.getItem('b_reviews');
+    if (local) {
+      const reviews: Review[] = JSON.parse(local);
+      const review = reviews.find(r => r.id === id);
+      const filtered = reviews.filter(r => r.id !== id);
+      localStorage.setItem('b_reviews', JSON.stringify(filtered));
+
+      if (review) {
+        await this.updateProfileStats(review.prestadorId);
+      }
+    }
+  },
+
+  async adminDeleteAppointment(id: string): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error } = await withTimeout(supabase.from('appointments').delete().eq('id', id), 2500);
+        if (error) throw error;
+        return;
+      } catch (err) {
+        console.error('Supabase adminDeleteAppointment error:', err);
+      }
+    }
+
+    const local = localStorage.getItem('b_appointments');
+    if (local) {
+      const appointments: Appointment[] = JSON.parse(local);
+      const filtered = appointments.filter(a => a.id !== id);
+      localStorage.setItem('b_appointments', JSON.stringify(filtered));
+    }
   }
 };

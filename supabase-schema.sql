@@ -1,9 +1,10 @@
 -- CONFIGURACIÓN DE BASE DE DATOS: BOLSA DE TRABAJO JALPAN
+-- Mantenimiento y producción real (100% real, sin datos semilla ficticios)
 
 -- 1. TABLA DE PERFILES (Vinculada a la autenticación central de Supabase)
 create table public.profiles (
   id uuid references auth.users on delete cascade primary key,
-  role text not null check (role in ('cliente', 'prestador')),
+  role text not null check (role in ('cliente', 'prestador', 'admin')),
   name text not null,
   phone text,
   bio text,
@@ -14,6 +15,9 @@ create table public.profiles (
   lng double precision default -99.4735,
   rating numeric default 5.0 check (rating >= 1.0 and rating <= 5.0),
   reviews_count integer default 0,
+  is_active boolean default false, -- Por defecto las cuentas de producción inician inactivas hasta aprobación
+  email text, -- Almacena de forma directa el correo del usuario registrado
+  work_photos text[] default '{}'::text[], -- Fotos de trabajos realizados por proveedores
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -109,19 +113,47 @@ create policy "Usuarios pueden enviar mensajes"
 -- Función para insertar automáticamente un perfil al registrar una cuenta de Supabase Auth
 create or replace function public.handle_new_user()
 returns trigger as $$
+declare
+  is_super_admin boolean;
+  chosen_role text;
 begin
-  insert into public.profiles (id, name, role, phone, bio, categories, rate, schedule, lat, lng)
+  -- Definir si es Super Admin basado en el correo
+  is_super_admin := (new.email = 'josemanuelvillaguillon@gmail.com');
+  chosen_role := coalesce(new.raw_user_meta_data->>'role', 'cliente');
+  
+  if is_super_admin then
+    chosen_role := 'admin';
+  end if;
+
+  insert into public.profiles (
+    id, 
+    name, 
+    role, 
+    phone, 
+    bio, 
+    categories, 
+    rate, 
+    schedule, 
+    lat, 
+    lng, 
+    is_active, 
+    email,
+    work_photos
+  )
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'name', 'Nuevo Usuario'),
-    coalesce(new.raw_user_meta_data->>'role', 'cliente'),
+    chosen_role,
     new.raw_user_meta_data->>'phone',
-    'Hola, acabo de unirme a la Bolsa de Trabajo de Jalpan.',
+    case when is_super_admin then 'Administrador Central de la Bolsa de Trabajo.' else 'Hola, acabo de unirme a la Bolsa de Trabajo de Jalpan.' end,
     '{}'::text[],
     0,
     'Lunes a Viernes',
     21.2185,
-    -99.4735
+    -99.4735,
+    is_super_admin, -- true para super admin, false para todos los demás por defecto
+    new.email,
+    '{}'::text[]
   );
   return new;
 end;

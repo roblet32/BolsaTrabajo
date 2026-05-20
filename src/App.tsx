@@ -9,6 +9,7 @@ import AppointmentList from './components/AppointmentList';
 import ChatPanel from './components/ChatPanel';
 import Chatbot from './components/Chatbot';
 import AuthView from './components/AuthView';
+import AdminDashboard from './components/AdminDashboard';
 import { Search, MapPin, Star, Phone, MessageSquare, Shield, HelpCircle } from 'lucide-react';
 import { Profile, getDistanceKm } from './services/db';
 
@@ -21,7 +22,10 @@ const MainAppContent: React.FC = () => {
     setSearchCategory,
     searchDistance,
     setSearchDistance,
-    clientLocation
+    clientLocation,
+    user,
+    adminNotification,
+    setAdminNotification
   } = useApp();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,6 +39,7 @@ const MainAppContent: React.FC = () => {
   // Filtrar prestadores según categoría, texto y distancia del cliente
   const filteredProfiles = profiles.filter((p) => {
     if (p.role !== 'prestador') return false;
+    if (p.isActive === false) return false; // Ocultar prestadores suspendidos o inactivos
 
     // Filtro por Categoría
     if (searchCategory && !p.categories.some((cat) => cat.toLowerCase() === searchCategory.toLowerCase())) {
@@ -71,11 +76,7 @@ const MainAppContent: React.FC = () => {
         return <LandingPage />;
       
       case 'mapa':
-        if (role === 'prestador') {
-          return <ProviderDashboard />;
-        }
-        
-        // Vista de Cliente
+        // Vista de Cliente o buscador general
         if (selectedDetailProfile) {
           return (
             <ProfileDetail
@@ -96,7 +97,7 @@ const MainAppContent: React.FC = () => {
             {/* Listado y Filtros Derechos */}
             <div className="providers-panel">
               <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <h3 style={{ fontSize: '1.1rem', color: 'white' }}>Filtros de Búsqueda</h3>
+                <h3 style={{ fontSize: '1.1rem', color: 'var(--text-dark-primary)' }}>Filtros de Búsqueda</h3>
                 
                 {/* Búsqueda por Texto */}
                 <div className="search-input-group" style={{ margin: 0 }}>
@@ -217,11 +218,24 @@ const MainAppContent: React.FC = () => {
       case 'citas':
         return <AppointmentList />;
 
+      case 'proveedor':
+        return <ProviderDashboard />;
+
       case 'chats':
         return <ChatPanel />;
 
       case 'auth':
         return <AuthView />;
+
+      case 'admin':
+        if (!user || (
+          user.role !== 'admin' && 
+          user.email?.toLowerCase() !== 'josemanuelvillaguillon@gmail.com' &&
+          localStorage.getItem('b_is_super_admin') !== 'true'
+        )) {
+          return <LandingPage />;
+        }
+        return <AdminDashboard />;
 
       default:
         return <LandingPage />;
@@ -235,8 +249,156 @@ const MainAppContent: React.FC = () => {
 
       {/* Cuerpo Principal */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {user && user.isActive === false && (
+          <div style={{
+            background: 'linear-gradient(90deg, rgba(217, 119, 6, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)',
+            borderBottom: '1px solid rgba(245, 158, 11, 0.25)',
+            color: '#fbbf24',
+            padding: '1rem 1.5rem',
+            textAlign: 'center',
+            fontSize: '0.9rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.75rem',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            zIndex: 90
+          }}>
+            <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+            <span>
+              <strong>Cuenta Pendiente de Autorización:</strong> Tu cuenta (perfil de {user.role === 'prestador' ? 'Proveedor' : 'Cliente'}) está siendo revisada por el Administrador. Tu perfil no será público ni visible en mapas o búsquedas hasta que sea autorizado.
+            </span>
+          </div>
+        )}
         {renderView()}
       </main>
+
+      {/* Modal de Simulación de Envío de Correo */}
+      {adminNotification && adminNotification.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '2rem'
+        }}>
+          <div className="glass-card" style={{
+            width: '100%',
+            maxWidth: '550px',
+            border: '1px solid rgba(20, 184, 166, 0.3)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}>
+            {/* Header del Correo */}
+            <div style={{
+              background: 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)',
+              padding: '1.25rem 1.5rem',
+              color: 'white',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.2rem'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span>📧 Notificación de Correo Enviada</span>
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.8 }}>
+                Bolsa de Trabajo Jalpan • Sistema de Autorizaciones
+              </p>
+            </div>
+
+            {/* Campos del Correo */}
+            <div style={{
+              padding: '1.5rem',
+              background: 'var(--bg-dark-card, #111827)',
+              color: 'var(--text-dark-primary, #f3f4f6)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+              fontSize: '0.9rem'
+            }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', paddingBottom: '0.5rem' }}>
+                <strong style={{ color: 'var(--text-dark-secondary, #9ca3af)' }}>Para:</strong>
+                <span style={{ color: 'var(--primary-light, #2dd4bf)', fontWeight: 'bold' }}>{adminNotification.to}</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', paddingBottom: '0.5rem' }}>
+                <strong style={{ color: 'var(--text-dark-secondary, #9ca3af)' }}>Asunto:</strong>
+                <span style={{ fontWeight: '600' }}>{adminNotification.subject}</span>
+              </div>
+              
+              {/* Cuerpo del Correo */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid rgba(255, 255, 255, 0.05)',
+                borderRadius: '8px',
+                padding: '1.25rem',
+                fontSize: '0.85rem',
+                lineHeight: '1.6',
+                whiteSpace: 'pre-wrap',
+                maxHeight: '220px',
+                overflowY: 'auto',
+                color: '#e5e7eb',
+                fontFamily: 'system-ui, -apple-system, sans-serif'
+              }}>
+                {adminNotification.body}
+              </div>
+            </div>
+
+            {/* Footer / Acciones */}
+            <div style={{
+              padding: '1.25rem 1.5rem',
+              background: 'rgba(255, 255, 255, 0.02)',
+              borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+              display: 'flex',
+              gap: '0.75rem',
+              justifyContent: 'end'
+            }}>
+              {/* Botón Mailto Real */}
+              <a
+                href={`mailto:${adminNotification.to}?subject=${encodeURIComponent(adminNotification.subject)}&body=${encodeURIComponent(adminNotification.body)}`}
+                style={{
+                  background: '#4f46e5',
+                  color: 'white',
+                  border: 'none',
+                  padding: '0.65rem 1.25rem',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  textDecoration: 'none',
+                  fontSize: '0.85rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  transition: 'var(--transition-fast)'
+                }}
+                onClick={() => setAdminNotification(null)}
+              >
+                <span>Enviar por Correo Real</span>
+              </a>
+
+              {/* Botón Entendido */}
+              <button
+                className="btn-secondary"
+                style={{
+                  padding: '0.65rem 1.25rem',
+                  fontSize: '0.85rem',
+                  borderRadius: '6px'
+                }}
+                onClick={() => setAdminNotification(null)}
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Asistente Chatbot Flotante */}
       <Chatbot />

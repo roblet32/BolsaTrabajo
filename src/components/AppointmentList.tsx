@@ -73,7 +73,7 @@ export const AppointmentList: React.FC = () => {
                   {nameToDisplay}
                 </h3>
                 <div style={{ fontSize: '0.8rem', color: 'var(--primary-light)', fontWeight: 'bold', marginTop: '-0.25rem' }}>
-                  {isClient ? 'Prestador de Servicio' : 'Cliente Solicitante'}
+                  {isClient ? 'Proveedor de Servicio' : 'Cliente Solicitante'}
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderTop: '1px solid var(--bg-dark-card-border)', paddingTop: '1rem', marginTop: '0.5rem' }}>

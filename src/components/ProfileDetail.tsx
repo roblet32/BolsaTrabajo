@@ -9,7 +9,7 @@ interface ProfileDetailProps {
 }
 
 export const ProfileDetail: React.FC<ProfileDetailProps> = ({ profile, onBack }) => {
-  const { user, bookService, submitReview, setActiveContact, setCurrentView } = useApp();
+  const { user, role, bookService, submitReview, setActiveContact, setCurrentView } = useApp();
   const [reviews, setReviews] = useState<Review[]>([]);
   
   // Estado para agendar cita
@@ -119,7 +119,7 @@ export const ProfileDetail: React.FC<ProfileDetailProps> = ({ profile, onBack })
                 <Phone size={18} style={{ color: '#10b981' }} />
                 <div>
                   <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Teléfono</div>
-                  <a href={`tel:${profile.phone}`} style={{ fontSize: '0.85rem', color: 'white', textDecoration: 'none', fontWeight: '600' }}>
+                  <a href={`tel:${profile.phone}`} style={{ fontSize: '0.85rem', color: 'var(--text-dark-primary)', textDecoration: 'none', fontWeight: '600' }}>
                     {profile.phone}
                   </a>
                 </div>
@@ -141,7 +141,7 @@ export const ProfileDetail: React.FC<ProfileDetailProps> = ({ profile, onBack })
           {!user ? (
             <div className="glass-card" style={{ padding: '1.75rem', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <Calendar size={32} style={{ margin: '0 auto', color: 'var(--primary-light)' }} />
-              <h3 style={{ fontSize: '1.1rem', color: 'white' }}>¿Quieres agendar una cita?</h3>
+              <h3 style={{ fontSize: '1.1rem', color: 'var(--text-dark-primary)' }}>¿Quieres agendar una cita?</h3>
               <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
                 Inicia sesión para contratar servicios de plomería, electricidad o carpintería de forma directa y 100% segura.
               </p>
@@ -155,7 +155,7 @@ export const ProfileDetail: React.FC<ProfileDetailProps> = ({ profile, onBack })
               </button>
             </div>
           ) : (
-            user.id !== profile.id && user.role === 'cliente' && (
+            user.id !== profile.id && role === 'cliente' && (
               <div className="glass-card" style={{ padding: '1.75rem' }}>
                 <h3 style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Calendar size={20} style={{ color: 'var(--primary-light)' }} />
@@ -226,6 +226,44 @@ export const ProfileDetail: React.FC<ProfileDetailProps> = ({ profile, onBack })
             </p>
           </div>
 
+          {/* Galería de Trabajos */}
+          {profile.workPhotos && profile.workPhotos.length > 0 && (
+            <div className="glass-card" style={{ padding: '2rem' }}>
+              <h3 style={{ borderBottom: '1px solid var(--bg-dark-card-border)', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
+                Fotos de sus Trabajos
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1rem' }}>
+                {profile.workPhotos.map((photo, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      height: '120px',
+                      border: '1px solid var(--bg-dark-card-border)',
+                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                      cursor: 'pointer'
+                    }}
+                    className="work-photo-item-container"
+                    onClick={() => window.open(photo, '_blank')}
+                  >
+                    <img
+                      src={photo}
+                      alt={`Trabajo finalizado ${index + 1}`}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transition: 'transform 0.3s ease'
+                      }}
+                      className="work-photo-img"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Calificaciones y Reseñas */}
           <div className="reviews-section">
             <div className="glass-card" style={{ padding: '2rem' }}>
@@ -234,7 +272,7 @@ export const ProfileDetail: React.FC<ProfileDetailProps> = ({ profile, onBack })
               </h3>
 
               {/* Formulario de Nueva Calificación */}
-              {user && user.id !== profile.id && user.role === 'cliente' && (
+              {user && user.id !== profile.id && role === 'cliente' && (
                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--bg-dark-card-border)', borderRadius: '12px', padding: '1.25rem', marginBottom: '2rem' }}>
                   <h4 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Star size={18} style={{ color: 'var(--secondary-color)' }} />
@@ -298,7 +336,7 @@ export const ProfileDetail: React.FC<ProfileDetailProps> = ({ profile, onBack })
                     <div key={r.id} className="review-item">
                       <div className="review-header">
                         <div>
-                          <strong style={{ color: 'white' }}>{r.clienteName}</strong>
+                          <strong style={{ color: 'var(--text-dark-primary)' }}>{r.clienteName}</strong>
                           <span style={{ color: '#94a3b8', fontSize: '0.75rem', marginLeft: '0.75rem' }}>
                             {new Date(r.date).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}
                           </span>

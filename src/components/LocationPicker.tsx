@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
+import { useApp } from '../context/AppContext';
 
 // Corregir bug de iconos de Leaflet en compilaciones de Vite/React
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -31,6 +32,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
   initialLng,
   onLocationChange
 }) => {
+  const { theme } = useApp();
   const [position, setPosition] = useState<L.LatLngExpression>([
     initialLat || 21.2185,
     initialLng || -99.4735
@@ -76,10 +78,26 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
         scrollWheelZoom={true}
         style={{ height: '100%', width: '100%' }}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        {(() => {
+          const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || '';
+          if (mapboxToken) {
+            const styleId = theme === 'light' ? 'light-v11' : 'dark-v11';
+            return (
+              <TileLayer
+                attribution='Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>'
+                url={`https://api.mapbox.com/styles/v1/mapbox/${styleId}/tiles/{z}/{x}/{y}?access_token=${mapboxToken}`}
+              />
+            );
+          } else {
+            const cartoStyle = theme === 'light' ? 'voyager' : 'dark_all';
+            return (
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                url={`https://{s}.basemaps.cartocdn.com/rastertiles/${cartoStyle}/{z}/{x}/{y}{r}.png`}
+              />
+            );
+          }
+        })()}
         <Marker
           draggable={true}
           eventHandlers={eventHandlers}

@@ -99,7 +99,7 @@ export const Chatbot: React.FC = () => {
           reply = `💰 **Estimado de Tarifas para ${detectedCategory.toUpperCase()}**\n\nEl precio promedio registrado en Jalpan de Serra es de **$${avg} MXN por hora**.\n- Tarifa más baja: **$${min} MXN/hr**\n- Tarifa más alta: **$${max} MXN/hr**\n\n*Nota: Estos precios son una base y pueden variar dependiendo de la complejidad del trabajo y el horario solicitado.*`;
           options = [`🔍 Ver ${detectedCategory}s`, '💰 Cotizar otro oficio', '📅 Agendar cita'];
         } else {
-          reply = `Actualmente no tengo tarifas base registradas para el oficio de **${detectedCategory}** en Jalpan de Serra. ¡Pero mantente al tanto, nuevos prestadores se unen todos los días!`;
+          reply = `Actualmente no tengo tarifas base registradas para el oficio de **${detectedCategory}** en Jalpan de Serra. ¡Pero mantente al tanto, nuevos proveedores se unen todos los días!`;
         }
       } else {
         reply = '¿De qué oficio te gustaría consultar el precio estimado? Escribe por ejemplo: *"¿Cuánto cobra un electricista?"* o *"Cotizar plomero"*.';
@@ -114,16 +114,16 @@ export const Chatbot: React.FC = () => {
       );
 
       if (foundProfiles.length > 0) {
-        reply = `✨ He encontrado **${foundProfiles.length}** prestador(es) de **${detectedCategory}** disponibles en Jalpan de Serra.\n\nAquí los tienes ordenados por cercanía:`;
+        reply = `✨ He encontrado **${foundProfiles.length}** proveedor(es) de **${detectedCategory}** disponibles en Jalpan de Serra.\n\nAquí los tienes ordenados por cercanía:`;
         options = ['💰 Cotizar este oficio', '📍 Ver en el mapa general', '📅 Agendar una Cita'];
       } else {
-        reply = `Lo siento, actualmente no tenemos registrados prestadores de **${detectedCategory}** en nuestro sistema. Intenta buscando otra categoría como plomero, carpintero o electricista.`;
+        reply = `Lo siento, actualmente no tenemos registrados proveedores de **${detectedCategory}** en nuestro sistema. Intenta buscando otra categoría como plomero, carpintero o electricista.`;
       }
     }
     // C. Si se pregunta por Citas
     else if (text.includes('cita') || text.includes('agendar') || text.includes('contratar') || text.includes('reserva') || text.includes('programar')) {
       type = 'appointment';
-      reply = '📅 **Cómo agendar una cita:**\n\n1. Ve a la pestaña **🔍 Buscar Servicios** en el menú superior.\n2. Encuentra al prestador ideal en el mapa o en la lista.\n3. Haz clic en **"Ver Perfil"** para revisar sus opiniones e introducciones.\n4. Llena el formulario **"Agendar una Cita"** en su barra lateral y haz clic en Contratar.\n\n*El prestador recibirá una notificación inmediata y te responderá en el Chat.*';
+      reply = '📅 **Cómo agendar una cita:**\n\n1. Ve a la pestaña **🔍 Buscar Servicios** en el menú superior.\n2. Encuentra al proveedor ideal en el mapa o en la lista.\n3. Haz clic en **"Ver Perfil"** para revisar sus opiniones e introducciones.\n4. Llena el formulario **"Agendar una Cita"** en su barra lateral y haz clic en Contratar.\n\n*El proveedor recibirá una notificación inmediata y te responderá en el Chat.*';
       options = ['🔍 Ir al Mapa de Jalpan', '💬 Chatear con alguien'];
     }
     // D. Saludos
@@ -222,8 +222,8 @@ export const Chatbot: React.FC = () => {
                           <div
                             key={p.id}
                             style={{
-                              background: 'rgba(255, 255, 255, 0.05)',
-                              border: '1px solid rgba(255,255,255,0.08)',
+                              background: 'var(--bg-dark-card)',
+                              border: '1px solid var(--bg-dark-card-border)',
                               borderRadius: '8px',
                               padding: '0.5rem 0.75rem',
                               cursor: 'pointer',
@@ -235,10 +235,10 @@ export const Chatbot: React.FC = () => {
                             title="Haz clic para chatear con este profesional"
                           >
                             <div>
-                              <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'white' }}>{p.name}</div>
-                              <div style={{ fontSize: '0.7rem', color: '#14b8a6' }}>📍 A {dist} km • ⭐ {p.rating}</div>
+                              <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-dark-primary)' }}>{p.name}</div>
+                              <div style={{ fontSize: '0.7rem', color: 'var(--primary-light)' }}>📍 A {dist} km • ⭐ {p.rating}</div>
                             </div>
-                            <div style={{ fontSize: '0.85rem', color: '#f59e0b', fontWeight: '800' }}>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--secondary-color)', fontWeight: '800' }}>
                               ${p.rate}/hr
                             </div>
                           </div>

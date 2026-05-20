@@ -1,35 +1,45 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { db, Profile, Appointment, ChatMessage } from '../services/db';
-import { supabase, isSupabaseConfigured } from '../services/supabaseClient';
+import { supabase, isSupabaseConfigured, withTimeout, supabaseUrl, supabaseAnonKey } from '../services/supabaseClient';
 
 interface AppContextType {
   user: Profile | null;
-  role: 'cliente' | 'prestador';
+  role: 'cliente' | 'prestador' | 'admin';
   profiles: Profile[];
   appointments: Appointment[];
   activeContact: Profile | null;
   messages: ChatMessage[];
-  currentView: 'inicio' | 'mapa' | 'perfil' | 'citas' | 'chats' | 'auth';
+  currentView: 'inicio' | 'mapa' | 'perfil' | 'citas' | 'chats' | 'auth' | 'admin' | 'proveedor';
   searchCategory: string;
   searchDistance: number;
   clientLocation: { lat: number; lng: number };
   isAuthLoading: boolean;
-  setUserRole: (role: 'cliente' | 'prestador') => void;
+  theme: 'light' | 'dark';
+  toggleTheme: () => void;
+  setUserRole: (role: 'cliente' | 'prestador' | 'admin') => void;
   loginAs: (profileId: string) => Promise<void>;
   updateUserProfile: (updated: Partial<Profile>) => Promise<void>;
   refreshProfiles: () => Promise<void>;
   refreshAppointments: () => Promise<void>;
   setActiveContact: (profile: Profile | null) => void;
   sendChat: (content: string) => Promise<void>;
-  setCurrentView: (view: 'inicio' | 'mapa' | 'perfil' | 'citas' | 'chats' | 'auth') => void;
+  setCurrentView: (view: 'inicio' | 'mapa' | 'perfil' | 'citas' | 'chats' | 'auth' | 'admin' | 'proveedor') => void;
   setSearchCategory: (cat: string) => void;
   setSearchDistance: (dist: number) => void;
   setClientLocation: (loc: { lat: number; lng: number }) => void;
   bookService: (prestadorId: string, prestadorName: string, date: string, time: string, notes: string) => Promise<Appointment>;
   submitReview: (prestadorId: string, score: number, comment: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string, role: 'cliente' | 'prestador', phone: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string, role: 'cliente' | 'prestador' | 'admin', phone: string) => Promise<void>;
+  signUpAdmin: (email: string, password: string, name: string, phone: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  // Métodos de Administración
+  deleteProfile: (id: string) => Promise<void>;
+  toggleProfileActive: (id: string, active: boolean) => Promise<void>;
+  deleteReview: (id: string) => Promise<void>;
+  deleteAppointment: (id: string) => Promise<void>;
+  adminNotification: { show: boolean, to: string, subject: string, body: string, userName: string } | null;
+  setAdminNotification: (notif: { show: boolean, to: string, subject: string, body: string, userName: string } | null) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -47,17 +57,35 @@ const DEFAULT_CLIENT: Profile = {
   lat: 21.2185, // Plaza Principal
   lng: -99.4735,
   rating: 5,
-  reviewsCount: 0
+  reviewsCount: 0,
+  isActive: true
+};
+
+// Administrador de prueba inicial
+const DEFAULT_ADMIN: Profile = {
+  id: 'a1',
+  role: 'admin',
+  name: 'Super Administrador Jalpan',
+  phone: '4411000000',
+  bio: 'Administrador central de la Bolsa de Trabajo Jalpan. Encargado de la supervisión de perfiles, reseñas y citas.',
+  categories: [],
+  rate: 0,
+  schedule: '24/7',
+  lat: 21.2185,
+  lng: -99.4735,
+  rating: 5,
+  reviewsCount: 0,
+  isActive: true
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<Profile | null>(null);
-  const [role, setRole] = useState<'cliente' | 'prestador'>('cliente');
+  const [role, setRole] = useState<'cliente' | 'prestador' | 'admin'>('cliente');
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [activeContact, setActiveContact] = useState<Profile | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [currentView, setCurrentView] = useState<'inicio' | 'mapa' | 'perfil' | 'citas' | 'chats' | 'auth'>('inicio');
+  const [currentView, setCurrentView] = useState<'inicio' | 'mapa' | 'perfil' | 'citas' | 'chats' | 'auth' | 'admin' | 'proveedor'>('inicio');
   const [searchCategory, setSearchCategory] = useState<string>('');
   const [searchDistance, setSearchDistance] = useState<number>(5); // 5km de radio por defecto
   const [clientLocation, setClientLocation] = useState<{ lat: number; lng: number }>({
@@ -65,6 +93,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     lng: -99.4735
   });
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [adminNotification, setAdminNotification] = useState<{ show: boolean, to: string, subject: string, body: string, userName: string } | null>(null);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('b_theme');
+      return (saved as 'light' | 'dark') || 'dark';
+    }
+    return 'dark';
+  });
+
+  // Sincronizar clase CSS del tema con el body
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const body = document.body;
+      if (theme === 'light') {
+        body.classList.add('theme-light');
+      } else {
+        body.classList.remove('theme-light');
+      }
+      localStorage.setItem('b_theme', theme);
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+  };
 
   // Escuchar la autenticación de Supabase (o inicializar localStorage local)
   useEffect(() => {
@@ -74,16 +127,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const savedUser = localStorage.getItem('b_current_user');
         if (savedUser) {
           const parsed = JSON.parse(savedUser) as Profile;
+          if ((parsed as any).email?.toLowerCase() === 'josemanuelvillaguillon@gmail.com' || parsed.role === 'admin' || parsed.id === 'a1' || parsed.id === 'admin_jose') {
+            parsed.role = 'admin';
+            localStorage.setItem('b_is_super_admin', 'true');
+          }
           setUser(parsed);
           setRole(parsed.role);
           if (parsed.role === 'cliente') {
             setClientLocation({ lat: parsed.lat, lng: parsed.lng });
           }
         } else {
-          localStorage.setItem('b_current_user', JSON.stringify(DEFAULT_CLIENT));
-          setUser(DEFAULT_CLIENT);
+          // Por defecto en producción iniciamos sin sesión (Invitado)
+          setUser(null);
           setRole('cliente');
-          setClientLocation({ lat: DEFAULT_CLIENT.lat, lng: DEFAULT_CLIENT.lng });
         }
         setIsAuthLoading(false);
         await refreshProfiles();
@@ -104,16 +160,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }
 
           if (profile) {
+            if (session.user.email?.toLowerCase() === 'josemanuelvillaguillon@gmail.com') {
+              profile.role = 'admin';
+              localStorage.setItem('b_is_super_admin', 'true');
+            }
             setUser(profile);
             setRole(profile.role);
             localStorage.setItem('b_current_user', JSON.stringify(profile));
           } else {
             // Fallback si por alguna razón el perfil no se creó a tiempo
             const metadata = session.user.user_metadata;
+            const forcedRole = session.user.email?.toLowerCase() === 'josemanuelvillaguillon@gmail.com' ? 'admin' : (metadata.role || 'cliente');
+            if (forcedRole === 'admin') {
+              localStorage.setItem('b_is_super_admin', 'true');
+            }
+            const isSuperAdmin = session.user.email?.toLowerCase() === 'josemanuelvillaguillon@gmail.com';
             const tempProfile = await db.saveProfile({
               id: session.user.id,
               name: metadata.name || 'Nuevo Usuario',
-              role: metadata.role || 'cliente',
+              role: forcedRole,
               phone: metadata.phone || '',
               bio: 'Hola, acabo de unirme a la Bolsa de Trabajo de Jalpan.',
               categories: [],
@@ -122,7 +187,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               lat: 21.2185,
               lng: -99.4735,
               rating: 5,
-              reviewsCount: 0
+              reviewsCount: 0,
+              isActive: isSuperAdmin ? true : false,
+              email: session.user.email || ''
             });
             setUser(tempProfile);
             setRole(tempProfile.role);
@@ -147,10 +214,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     initApp();
   }, []);
 
-  // Cargar citas si cambia el usuario
+  // Cargar citas y perfiles si cambia el usuario
   useEffect(() => {
     if (user) {
       refreshAppointments();
+      refreshProfiles();
     }
   }, [user]);
 
@@ -168,19 +236,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [user, activeContact]);
 
   const refreshProfiles = async () => {
-    const p = await db.getProfiles();
+    const isCurrentUserAdmin = (user && user.role === 'admin') || 
+                               localStorage.getItem('b_is_super_admin') === 'true' ||
+                               (typeof window !== 'undefined' && JSON.parse(localStorage.getItem('b_current_user') || 'null')?.role === 'admin');
+    const p = isCurrentUserAdmin
+      ? await db.adminGetAllProfiles() 
+      : await db.getProfiles();
     setProfiles(p);
   };
 
   const refreshAppointments = async () => {
     if (user) {
-      const appts = await db.getAppointments(user.id, user.role);
-      setAppointments(appts);
+      if (user.role === 'admin') {
+        const appts = await db.adminGetAllAppointments();
+        setAppointments(appts);
+      } else {
+        const appts = await db.getAppointments(user.id, user.role);
+        setAppointments(appts);
+      }
     }
   };
 
   // Alternar el rol activamente (para pruebas ágiles)
-  const setUserRole = async (newRole: 'cliente' | 'prestador') => {
+  const setUserRole = async (newRole: 'cliente' | 'prestador' | 'admin') => {
     if (isSupabaseConfigured && supabase) {
       // En modo Supabase real, el rol está guardado en el perfil. 
       // Le permitimos cambiar el rol actualizando su registro en Supabase.
@@ -191,7 +269,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     // Modo local / demostración
-    if (!user) return;
     if (newRole === 'prestador') {
       const prestadorDemo = await db.getProfileById('p1');
       if (prestadorDemo) {
@@ -199,6 +276,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setRole('prestador');
         localStorage.setItem('b_current_user', JSON.stringify(prestadorDemo));
       }
+      setCurrentView('inicio');
+    } else if (newRole === 'admin') {
+      setUser(DEFAULT_ADMIN);
+      setRole('admin');
+      localStorage.setItem('b_current_user', JSON.stringify(DEFAULT_ADMIN));
+      localStorage.setItem('b_is_super_admin', 'true');
+      setCurrentView('admin');
     } else {
       let clienteDemo = await db.getProfileById('c1');
       if (!clienteDemo) {
@@ -208,9 +292,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setRole('cliente');
       setClientLocation({ lat: clienteDemo.lat, lng: clienteDemo.lng });
       localStorage.setItem('b_current_user', JSON.stringify(clienteDemo));
+      setCurrentView('inicio');
     }
     setActiveContact(null);
-    setCurrentView('inicio');
   };
 
   // Iniciar sesión como un usuario específico de la base de datos (Demo)
@@ -233,6 +317,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!user) return;
     const newProfile = await db.saveProfile({ ...user, ...updated } as Profile);
     setUser(newProfile);
+    if (updated.role) {
+      setRole(updated.role);
+    }
     localStorage.setItem('b_current_user', JSON.stringify(newProfile));
     await refreshProfiles();
   };
@@ -285,49 +372,189 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // REGISTRO REAL (Supabase Auth)
-  const signUp = async (email: string, password: string, name: string, role: 'cliente' | 'prestador', phone: string) => {
+  const signUp = async (email: string, password: string, name: string, chosenRole: 'cliente' | 'prestador' | 'admin', phone: string) => {
+    let role = chosenRole;
+    // Evitar que usuarios externos se registren como admin
+    if (role === 'admin' && email.toLowerCase() !== 'josemanuelvillaguillon@gmail.com') {
+      role = 'cliente';
+    }
+
     if (!isSupabaseConfigured || !supabase) {
       // Simular registro en LocalStorage
       const mockId = 'mock_u_' + Math.random().toString(36).substr(2, 9);
+      const isSuperAdmin = email.toLowerCase() === 'josemanuelvillaguillon@gmail.com';
       const newMockProfile = await db.saveProfile({
         id: mockId,
         name,
-        role,
+        role: isSuperAdmin ? 'admin' : role,
         phone,
-        bio: 'Hola, acabo de unirme a la Bolsa de Trabajo de Jalpan (Modo Demo).',
+        bio: isSuperAdmin ? 'Administrador principal de la Bolsa de Trabajo Jalpan.' : 'Hola, acabo de unirme a la Bolsa de Trabajo de Jalpan.',
         categories: [],
         rate: 0,
         schedule: 'Lunes a Viernes',
         lat: 21.2185,
         lng: -99.4735,
         rating: 5,
-        reviewsCount: 0
+        reviewsCount: 0,
+        isActive: isSuperAdmin ? true : false,
+        email: email
       });
       setUser(newMockProfile);
-      setRole(role);
+      setRole(isSuperAdmin ? 'admin' : role);
       localStorage.setItem('b_current_user', JSON.stringify(newMockProfile));
       return;
     }
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name,
-          role,
-          phone
+    try {
+      const { error } = await withTimeout(supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            role,
+            phone
+          }
         }
+      }), 2500);
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Error al registrarse en Supabase:', err);
+      // Resiliencia: si es un error de red/fetch o timeout, registrar localmente
+      if (
+        err.message?.includes('fetch') || 
+        err.message?.includes('Network') || 
+        err.message?.includes('Timeout') || 
+        err.message?.includes('timeout') || 
+        err.name === 'TypeError'
+      ) {
+        console.warn('Fallo de red o timeout en Supabase. Creando cuenta local resiliente...');
+        const mockId = 'mock_u_' + Math.random().toString(36).substr(2, 9);
+        const isSuperAdmin = email.toLowerCase() === 'josemanuelvillaguillon@gmail.com';
+        const newMockProfile = await db.saveProfile({
+          id: mockId,
+          name,
+          role: isSuperAdmin ? 'admin' : role,
+          phone,
+          bio: isSuperAdmin ? 'Administrador principal (Red offline).' : 'Hola, acabo de unirme a la Bolsa de Trabajo de Jalpan (Red offline).',
+          categories: [],
+          rate: 0,
+          schedule: 'Lunes a Viernes',
+          lat: 21.2185,
+          lng: -99.4735,
+          rating: 5,
+          reviewsCount: 0,
+          isActive: isSuperAdmin ? true : false,
+          email: email
+        });
+        setUser(newMockProfile);
+        setRole(isSuperAdmin ? 'admin' : role);
+        localStorage.setItem('b_current_user', JSON.stringify(newMockProfile));
+        return;
       }
-    });
+      throw err;
+    }
+  };
 
-    if (error) throw error;
+  // REGISTRO DE ADMINISTRADOR (Session-free)
+  const signUpAdmin = async (email: string, password: string, name: string, phone: string) => {
+    if (!isSupabaseConfigured || !supabase) {
+      // Simular en LocalStorage
+      const mockId = 'mock_admin_' + Math.random().toString(36).substr(2, 9);
+      await db.saveProfile({
+        id: mockId,
+        name,
+        role: 'admin',
+        phone,
+        bio: 'Administrador registrado (Modo Demo).',
+        categories: [],
+        rate: 0,
+        schedule: '24/7',
+        lat: 21.2185,
+        lng: -99.4735,
+        rating: 5,
+        reviewsCount: 0,
+        isActive: true,
+        email: email
+      });
+      await refreshProfiles();
+      return;
+    }
+
+    try {
+      const { createClient } = await import('@supabase/supabase-js');
+      const tempClient = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: { persistSession: false }
+      });
+      
+      const { error } = await tempClient.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            role: 'admin',
+            phone
+          }
+        }
+      });
+      if (error) throw error;
+      
+      await refreshProfiles();
+    } catch (err: any) {
+      console.error('Error al registrar administrador en Supabase:', err);
+      if (
+        err.message?.includes('fetch') || 
+        err.message?.includes('Network') || 
+        err.message?.includes('Timeout') || 
+        err.message?.includes('timeout') || 
+        err.name === 'TypeError'
+      ) {
+        // Fallback local
+        const mockId = 'mock_admin_' + Math.random().toString(36).substr(2, 9);
+        await db.saveProfile({
+          id: mockId,
+          name,
+          role: 'admin',
+          phone,
+          bio: 'Administrador registrado (Red offline).',
+          categories: [],
+          rate: 0,
+          schedule: '24/7',
+          lat: 21.2185,
+          lng: -99.4735,
+          rating: 5,
+          reviewsCount: 0,
+          isActive: true,
+          email: email
+        });
+        await refreshProfiles();
+        return;
+      }
+      throw err;
+    }
   };
 
   // INICIO DE SESIÓN REAL (Supabase Auth)
   const signIn = async (email: string, password: string) => {
     if (!isSupabaseConfigured || !supabase) {
       // Simular login en LocalStorage buscando por email/nombre
+      if (email.toLowerCase() === 'josemanuelvillaguillon@gmail.com') {
+        const adminProfile: Profile = {
+          ...DEFAULT_ADMIN,
+          id: 'admin_jose',
+          name: 'José Manuel Villa (Admin)',
+          bio: 'Administrador central de la Bolsa de Trabajo Jalpan.'
+        };
+        (adminProfile as any).email = 'josemanuelvillaguillon@gmail.com';
+        setUser(adminProfile);
+        setRole('admin');
+        localStorage.setItem('b_current_user', JSON.stringify(adminProfile));
+        localStorage.setItem('b_is_super_admin', 'true');
+        setCurrentView('admin');
+        return;
+      }
+
       const nameFromEmail = email.split('@')[0];
       const profilesList = await db.getProfiles();
       const found = profilesList.find(p => p.name.toLowerCase().includes(nameFromEmail.toLowerCase()));
@@ -343,24 +570,107 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+    try {
+      const { error } = await withTimeout(supabase.auth.signInWithPassword({
+        email,
+        password
+      }), 2500);
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Error al iniciar sesión en Supabase:', err);
+      // Resiliencia: si es un error de red/fetch o timeout, iniciar sesión localmente
+      if (
+        err.message?.includes('fetch') || 
+        err.message?.includes('Network') || 
+        err.message?.includes('Timeout') || 
+        err.message?.includes('timeout') || 
+        err.name === 'TypeError'
+      ) {
+        console.warn('Fallo de red o timeout en Supabase. Iniciando sesión de forma local...');
+        if (email.toLowerCase() === 'josemanuelvillaguillon@gmail.com') {
+          const adminProfile: Profile = {
+            ...DEFAULT_ADMIN,
+            id: 'admin_jose',
+            name: 'José Manuel Villa (Admin)',
+            bio: 'Administrador central de la Bolsa de Trabajo Jalpan.'
+          };
+          (adminProfile as any).email = 'josemanuelvillaguillon@gmail.com';
+          setUser(adminProfile);
+          setRole('admin');
+          localStorage.setItem('b_current_user', JSON.stringify(adminProfile));
+          localStorage.setItem('b_is_super_admin', 'true');
+          setCurrentView('admin');
+          return;
+        }
 
-    if (error) throw error;
+        const nameFromEmail = email.split('@')[0];
+        const profilesList = await db.getProfiles();
+        const found = profilesList.find(p => p.name.toLowerCase().includes(nameFromEmail.toLowerCase()));
+        if (found) {
+          setUser(found);
+          setRole(found.role);
+          localStorage.setItem('b_current_user', JSON.stringify(found));
+        } else {
+          setUser(DEFAULT_CLIENT);
+          setRole('cliente');
+          localStorage.setItem('b_current_user', JSON.stringify(DEFAULT_CLIENT));
+        }
+        return;
+      }
+      throw err;
+    }
   };
 
   // CERRAR SESIÓN REAL (Supabase Auth)
   const signOut = async () => {
-    if (isSupabaseConfigured && supabase) {
-      const { error } = await supabase.auth.signOut();
-      if (error) console.error(error);
-    } else {
+    try {
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await withTimeout(supabase.auth.signOut(), 2500);
+        if (error) throw error;
+      }
+    } catch (err) {
+      console.error('Error al cerrar sesión en Supabase:', err);
+    } finally {
       setUser(null);
       localStorage.removeItem('b_current_user');
+      localStorage.removeItem('b_is_super_admin');
+      setCurrentView('inicio');
     }
-    setCurrentView('inicio');
+  };
+
+  // Métodos de Administración
+  const deleteProfile = async (id: string) => {
+    await db.adminDeleteProfile(id);
+    await refreshProfiles();
+  };
+
+  const toggleProfileActive = async (id: string, active: boolean) => {
+    await db.adminToggleProfileActive(id, active);
+    await refreshProfiles();
+    
+    // Si el administrador activa la cuenta, simular el envío de un correo de autorización
+    if (active) {
+      const p = await db.getProfileById(id);
+      if (p && p.email) {
+        setAdminNotification({
+          show: true,
+          to: p.email,
+          userName: p.name,
+          subject: '¡Tu perfil ha sido Autorizado y Aprobado! - Bolsa de Trabajo Jalpan',
+          body: `Estimado/a ${p.name},\n\nNos complace informarte que el administrador ha revisado y autorizado tu cuenta en la Bolsa de Trabajo de Jalpan de Serra.\n\nTu perfil ahora es oficial, público y completamente visible en los mapas interactivos y búsquedas para todos los vecinos de la Sierra Gorda.\n\n¡Mucho éxito en tus contrataciones y servicios!\n\nAtentamente,\nEl Administrador Central\nBolsa de Trabajo Jalpan de Serra`
+        });
+      }
+    }
+  };
+
+  const deleteReview = async (id: string) => {
+    await db.adminDeleteReview(id);
+    await refreshProfiles();
+  };
+
+  const deleteAppointment = async (id: string) => {
+    await db.adminDeleteAppointment(id);
+    await refreshAppointments();
   };
 
   return (
@@ -377,6 +687,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         searchDistance,
         clientLocation,
         isAuthLoading,
+        theme,
+        toggleTheme,
         setUserRole,
         loginAs,
         updateUserProfile,
@@ -391,8 +703,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         bookService,
         submitReview,
         signUp,
+        signUpAdmin,
         signIn,
-        signOut
+        signOut,
+        deleteProfile,
+        toggleProfileActive,
+        deleteReview,
+        deleteAppointment,
+        adminNotification,
+        setAdminNotification
       }}
     >
       {children}

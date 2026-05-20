@@ -53,7 +53,7 @@ export const ChatPanel: React.FC = () => {
     <div style={{ maxWidth: '1400px', margin: '0 auto', height: 'calc(100vh - 120px)', padding: '1rem' }}>
       <div className="glass-card chat-layout" style={{ height: '100%', overflow: 'hidden', padding: 0 }}>
         {/* Panel Izquierdo: Lista de Contactos */}
-        <div style={{ borderRight: '1px solid var(--bg-dark-card-border)', display: 'flex', flexDirection: 'column', height: '100%', background: 'rgba(9,13,22,0.3)' }}>
+        <div style={{ borderRight: '1px solid var(--bg-dark-card-border)', display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-role-switcher, rgba(9,13,22,0.3))' }}>
           <div style={{ padding: '1.25rem', borderBottom: '1px solid var(--bg-dark-card-border)' }}>
             <h3 style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <MessageSquare size={20} style={{ color: 'var(--primary-light)' }} />
@@ -65,7 +65,7 @@ export const ChatPanel: React.FC = () => {
             {contacts.length === 0 ? (
               <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem', padding: '2rem 1rem' }}>
                 <AlertCircle size={24} style={{ margin: '0 auto 0.5rem auto' }} />
-                No tienes chats activos. Inicia uno desde el perfil de un prestador.
+                No tienes chats activos. Inicia uno desde el perfil de un proveedor.
               </div>
             ) : (
               contacts.map((contact) => (
@@ -79,7 +79,7 @@ export const ChatPanel: React.FC = () => {
                     {contact.name.charAt(0)}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--text-dark-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {contact.name}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: '#14b8a6', textTransform: 'capitalize' }}>
@@ -93,7 +93,7 @@ export const ChatPanel: React.FC = () => {
         </div>
 
         {/* Panel Derecho: Sala de Chat Activa */}
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#090d16' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-chat-messages, #090d16)' }}>
           {activeContact ? (
             <>
               {/* Cabecera del Chatbox */}
@@ -103,7 +103,7 @@ export const ChatPanel: React.FC = () => {
                     {activeContact.name.charAt(0)}
                   </div>
                   <div>
-                    <h4 style={{ color: 'white' }}>{activeContact.name}</h4>
+                    <h4 style={{ color: 'var(--text-dark-primary)' }}>{activeContact.name}</h4>
                     <span style={{ fontSize: '0.75rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '3px' }}>
                       <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
                       En línea
@@ -134,7 +134,7 @@ export const ChatPanel: React.FC = () => {
                         className={`chat-bubble ${isMe ? 'user' : 'bot'}`}
                         style={{
                           alignSelf: isMe ? 'flex-end' : 'flex-start',
-                          background: isMe ? 'var(--primary-color)' : 'rgba(255,255,255,0.06)',
+                          background: isMe ? 'var(--primary-color)' : 'var(--bg-chat-bubble-bot, rgba(255,255,255,0.06))',
                           borderBottomRightRadius: isMe ? '4px' : '16px',
                           borderBottomLeftRadius: isMe ? '16px' : '4px',
                           boxShadow: isMe ? '0 4px 10px rgba(15,118,110,0.3)' : 'none'
@@ -152,7 +152,7 @@ export const ChatPanel: React.FC = () => {
               </div>
 
               {/* Entrada de Chat */}
-              <form onSubmit={handleSend} style={{ padding: '1rem', borderTop: '1px solid var(--bg-dark-card-border)', display: 'flex', gap: '0.75rem', background: '#090d16' }}>
+              <form onSubmit={handleSend} style={{ padding: '1rem', borderTop: '1px solid var(--bg-dark-card-border)', display: 'flex', gap: '0.75rem', background: 'var(--bg-dark, #090d16)' }}>
                 <input
                   type="text"
                   className="chatbot-input"

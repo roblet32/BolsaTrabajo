@@ -26,7 +26,7 @@ export const AuthView: React.FC<{ onAuthSuccess?: () => void }> = ({ onAuthSucce
         setTimeout(() => {
           if (onAuthSuccess) onAuthSuccess();
           setCurrentView('inicio');
-        }, 800);
+        }, 150);
       } else {
         if (!name.trim()) throw new Error('El nombre es obligatorio.');
         if (password.length < 6) throw new Error('La contraseña debe tener al menos 6 caracteres.');
@@ -68,7 +68,7 @@ export const AuthView: React.FC<{ onAuthSuccess?: () => void }> = ({ onAuthSucce
           <div className="brand-logo" style={{ margin: '0 auto 1rem auto', width: '50px', height: '50px' }}>
             <Briefcase size={28} color="white" />
           </div>
-          <h2 style={{ fontSize: '1.75rem', color: 'white', marginBottom: '0.5rem' }}>
+          <h2 style={{ fontSize: '1.75rem', color: 'var(--text-dark-primary)', marginBottom: '0.5rem' }}>
             {isLogin ? '¡Bienvenido de Nuevo!' : 'Crea tu Cuenta'}
           </h2>
           <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
@@ -115,7 +115,7 @@ export const AuthView: React.FC<{ onAuthSuccess?: () => void }> = ({ onAuthSucce
           {/* Campo Nombre (Solo registro) */}
           {!isLogin && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1' }}>Nombre Completo</label>
+              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-dark-secondary)' }}>Nombre Completo</label>
               <div className="search-input-group" style={{ margin: 0 }}>
                 <User size={18} />
                 <input
@@ -132,7 +132,7 @@ export const AuthView: React.FC<{ onAuthSuccess?: () => void }> = ({ onAuthSucce
 
           {/* Campo Email */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-            <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1' }}>Correo Electrónico</label>
+            <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-dark-secondary)' }}>Correo Electrónico</label>
             <div className="search-input-group" style={{ margin: 0 }}>
               <Mail size={18} />
               <input
@@ -149,7 +149,7 @@ export const AuthView: React.FC<{ onAuthSuccess?: () => void }> = ({ onAuthSucce
           {/* Campo Teléfono (Solo registro) */}
           {!isLogin && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1' }}>Teléfono (10 dígitos)</label>
+              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-dark-secondary)' }}>Teléfono (10 dígitos)</label>
               <div className="search-input-group" style={{ margin: 0 }}>
                 <Phone size={18} />
                 <input
@@ -165,7 +165,7 @@ export const AuthView: React.FC<{ onAuthSuccess?: () => void }> = ({ onAuthSucce
 
           {/* Campo Contraseña */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-            <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1' }}>Contraseña</label>
+            <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-dark-secondary)' }}>Contraseña</label>
             <div className="search-input-group" style={{ margin: 0 }}>
               <Lock size={18} />
               <input
@@ -182,7 +182,7 @@ export const AuthView: React.FC<{ onAuthSuccess?: () => void }> = ({ onAuthSucce
           {/* Selector de Rol (Solo registro) */}
           {!isLogin && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#cbd5e1' }}>¿Cómo usarás la plataforma?</label>
+              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-dark-secondary)' }}>¿Cómo usarás la plataforma?</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <button
                   type="button"
@@ -191,8 +191,8 @@ export const AuthView: React.FC<{ onAuthSuccess?: () => void }> = ({ onAuthSucce
                     padding: '0.75rem',
                     borderRadius: 'var(--radius-sm)',
                     border: role === 'cliente' ? '2px solid var(--accent-color)' : '1px solid var(--bg-dark-card-border)',
-                    background: role === 'cliente' ? 'rgba(79, 70, 229, 0.15)' : 'rgba(255,255,255,0.03)',
-                    color: 'white',
+                    background: role === 'cliente' ? 'var(--accent-color)' : 'var(--bg-input, rgba(255,255,255,0.03))',
+                    color: role === 'cliente' ? 'white' : 'var(--text-dark-secondary)',
                     fontFamily: 'var(--font-heading)',
                     fontWeight: '700',
                     cursor: 'pointer',
@@ -208,15 +208,15 @@ export const AuthView: React.FC<{ onAuthSuccess?: () => void }> = ({ onAuthSucce
                     padding: '0.75rem',
                     borderRadius: 'var(--radius-sm)',
                     border: role === 'prestador' ? '2px solid var(--primary-light)' : '1px solid var(--bg-dark-card-border)',
-                    background: role === 'prestador' ? 'rgba(20, 184, 166, 0.15)' : 'rgba(255,255,255,0.03)',
-                    color: 'white',
+                    background: role === 'prestador' ? 'var(--primary-light)' : 'var(--bg-input, rgba(255,255,255,0.03))',
+                    color: role === 'prestador' ? 'white' : 'var(--text-dark-secondary)',
                     fontFamily: 'var(--font-heading)',
                     fontWeight: '700',
                     cursor: 'pointer',
                     transition: 'var(--transition-fast)'
                   }}
                 >
-                  Prestador
+                  Proveedor de Servicio
                 </button>
               </div>
             </div>
