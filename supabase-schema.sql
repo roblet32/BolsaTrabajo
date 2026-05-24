@@ -33,6 +33,10 @@ create policy "Los usuarios pueden actualizar su propio perfil"
   on public.profiles for update 
   using (auth.uid() = id);
 
+create policy "Los usuarios pueden insertar su propio perfil" 
+  on public.profiles for insert 
+  with check (auth.uid() = id);
+
 -- 2. TABLA DE CITAS (APPOINTMENTS)
 create table public.appointments (
   id uuid default gen_random_uuid() primary key,
@@ -151,7 +155,7 @@ begin
     'Lunes a Viernes',
     21.2185,
     -99.4735,
-    is_super_admin, -- true para super admin, false para todos los demás por defecto
+    case when chosen_role = 'cliente' then true when is_super_admin then true else false end, -- Clientes y super admins activos por defecto, proveedores requieren aprobación
     new.email,
     '{}'::text[]
   );
@@ -163,3 +167,67 @@ $$ language plpgsql security definer;
 create or replace trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+
+-- ==========================================
+-- POLÍTICAS DE RLS PARA EL PANEL DE ADMINISTRACIÓN
+-- Permite a los usuarios con rol 'admin' moderar toda la plataforma
+-- ==========================================
+
+-- 1. Políticas de Administración sobre la tabla PROFILES
+create policy "Admins pueden actualizar cualquier perfil" 
+  on public.profiles for update 
+  using (
+    exists (
+      select 1 from public.profiles 
+      where id = auth.uid() and role = 'admin'
+    )
+  );
+
+create policy "Admins pueden eliminar cualquier perfil" 
+  on public.profiles for delete 
+  using (
+    exists (
+      select 1 from public.profiles 
+      where id = auth.uid() and role = 'admin'
+    )
+  );
+
+-- 2. Políticas de Administración sobre la tabla APPOINTMENTS (Citas)
+create policy "Admins pueden ver todas las citas" 
+  on public.appointments for select 
+  using (
+    exists (
+      select 1 from public.profiles 
+      where id = auth.uid() and role = 'admin'
+    )
+  );
+
+create policy "Admins pueden actualizar cualquier cita" 
+  on public.appointments for update 
+  using (
+    exists (
+      select 1 from public.profiles 
+      where id = auth.uid() and role = 'admin'
+    )
+  );
+
+create policy "Admins pueden eliminar cualquier cita" 
+  on public.appointments for delete 
+  using (
+    exists (
+      select 1 from public.profiles 
+      where id = auth.uid() and role = 'admin'
+    )
+  );
+
+-- 3. Políticas de Administración sobre la tabla RATINGS (Calificaciones/Reseñas)
+create policy "Admins pueden eliminar cualquier calificación" 
+  on public.ratings for delete 
+  using (
+    exists (
+      select 1 from public.profiles 
+      where id = auth.uid() and role = 'admin'
+    )
+  );
+

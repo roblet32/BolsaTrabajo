@@ -4,7 +4,7 @@ import L from 'leaflet';
 import { useApp } from '../context/AppContext';
 
 // Corregir bug de iconos de Leaflet en compilaciones de Vite/React
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -26,6 +26,20 @@ const providerEditIcon = new L.Icon({
   popupAnchor: [1, -34],
   shadowSize: [41, 41]
 });
+
+interface MapEventsProps {
+  onMapClick: (lat: number, lng: number) => void;
+}
+
+// Declarar MapEvents fuera del componente principal para cumplir con react-hooks/static-components
+const MapEvents: React.FC<MapEventsProps> = ({ onMapClick }) => {
+  useMapEvents({
+    click(e) {
+      onMapClick(e.latlng.lat, e.latlng.lng);
+    }
+  });
+  return null;
+};
 
 export const LocationPicker: React.FC<LocationPickerProps> = ({
   initialLat,
@@ -55,20 +69,23 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
     [onLocationChange]
   );
 
-  // Mapa eventos para hacer clic y mover el pin
-  const MapEvents = () => {
-    useMapEvents({
-      click(e) {
-        setPosition([e.latlng.lat, e.latlng.lng]);
-        onLocationChange(e.latlng.lat, e.latlng.lng);
-      }
-    });
-    return null;
+  const handleMapClick = (lat: number, lng: number) => {
+    setPosition([lat, lng]);
+    onLocationChange(lat, lng);
   };
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    setPosition([initialLat || 21.2185, initialLng || -99.4735]);
-  }, [initialLat, initialLng]);
+    const targetLat = initialLat || 21.2185;
+    const targetLng = initialLng || -99.4735;
+    if (Array.isArray(position)) {
+      const [currLat, currLng] = position as number[];
+      if (currLat !== targetLat || currLng !== targetLng) {
+        setPosition([targetLat, targetLng]);
+      }
+    }
+  }, [initialLat, initialLng, position]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   return (
     <div style={{ height: '350px', width: '100%', borderRadius: '12px', overflow: 'hidden' }}>
@@ -89,11 +106,13 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
               />
             );
           } else {
-            const cartoStyle = theme === 'light' ? 'voyager' : 'dark_all';
+            const tileUrl = theme === 'light'
+              ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+              : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
             return (
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                url={`https://{s}.basemaps.cartocdn.com/rastertiles/${cartoStyle}/{z}/{x}/{y}{r}.png`}
+                url={tileUrl}
               />
             );
           }
@@ -105,7 +124,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
           ref={markerRef}
           icon={providerEditIcon}
         />
-        <MapEvents />
+        <MapEvents onMapClick={handleMapClick} />
       </MapContainer>
       <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.5rem', textAlign: 'center' }}>
         * Arrastra el marcador o haz clic en cualquier parte del mapa para marcar tu ubicación exacta.
@@ -113,4 +132,5 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
     </div>
   );
 };
+
 export default LocationPicker;

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { db, Profile, Appointment, ChatMessage } from '../services/db';
 import { supabase, isSupabaseConfigured, withTimeout, supabaseUrl, supabaseAnonKey } from '../services/supabaseClient';
+import { isEmailConfigured, sendEmailBackground } from '../services/email';
 
 interface AppContextType {
   user: Profile | null;
@@ -40,6 +41,8 @@ interface AppContextType {
   deleteAppointment: (id: string) => Promise<void>;
   adminNotification: { show: boolean, to: string, subject: string, body: string, userName: string } | null;
   setAdminNotification: (notif: { show: boolean, to: string, subject: string, body: string, userName: string } | null) => void;
+  chatEmailNotification: { show: boolean, to: string, recipientName: string, senderName: string, subject: string, body: string, content: string } | null;
+  setChatEmailNotification: (notif: { show: boolean, to: string, recipientName: string, senderName: string, subject: string, body: string, content: string } | null) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -94,6 +97,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [adminNotification, setAdminNotification] = useState<{ show: boolean, to: string, subject: string, body: string, userName: string } | null>(null);
+  const [chatEmailNotification, setChatEmailNotification] = useState<{ show: boolean, to: string, recipientName: string, senderName: string, subject: string, body: string, content: string } | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('b_theme');
@@ -119,6 +123,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
   };
 
+  async function refreshProfiles() {
+    const isCurrentUserAdmin = (user && user.role === 'admin') || 
+                               localStorage.getItem('b_is_super_admin') === 'true' ||
+                               (typeof window !== 'undefined' && JSON.parse(localStorage.getItem('b_current_user') || 'null')?.role === 'admin');
+    const p = isCurrentUserAdmin
+      ? await db.adminGetAllProfiles() 
+      : await db.getProfiles();
+    setProfiles(p);
+  }
+
+  async function refreshAppointments() {
+    if (user) {
+      if (user.role === 'admin') {
+        const appts = await db.adminGetAllAppointments();
+        setAppointments(appts);
+      } else {
+        const appts = await db.getAppointments(user.id, user.role);
+        setAppointments(appts);
+      }
+    }
+  }
+
   // Escuchar la autenticación de Supabase (o inicializar localStorage local)
   useEffect(() => {
     const initApp = async () => {
@@ -127,7 +153,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const savedUser = localStorage.getItem('b_current_user');
         if (savedUser) {
           const parsed = JSON.parse(savedUser) as Profile;
-          if ((parsed as any).email?.toLowerCase() === 'josemanuelvillaguillon@gmail.com' || parsed.role === 'admin' || parsed.id === 'a1' || parsed.id === 'admin_jose') {
+          if (parsed.email?.toLowerCase() === 'josemanuelvillaguillon@gmail.com' || parsed.role === 'admin' || parsed.id === 'a1' || parsed.id === 'admin_jose') {
             parsed.role = 'admin';
             localStorage.setItem('b_is_super_admin', 'true');
           }
@@ -188,7 +214,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               lng: -99.4735,
               rating: 5,
               reviewsCount: 0,
-              isActive: isSuperAdmin ? true : false,
+              isActive: isSuperAdmin ? true : (forcedRole === 'cliente' ? true : false),
               email: session.user.email || ''
             });
             setUser(tempProfile);
@@ -212,15 +238,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     initApp();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Cargar citas y perfiles si cambia el usuario
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (user) {
       refreshAppointments();
       refreshProfiles();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Cargar mensajes si cambia el usuario o el contacto activo
   useEffect(() => {
@@ -234,28 +264,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     loadMessages();
   }, [user, activeContact]);
-
-  const refreshProfiles = async () => {
-    const isCurrentUserAdmin = (user && user.role === 'admin') || 
-                               localStorage.getItem('b_is_super_admin') === 'true' ||
-                               (typeof window !== 'undefined' && JSON.parse(localStorage.getItem('b_current_user') || 'null')?.role === 'admin');
-    const p = isCurrentUserAdmin
-      ? await db.adminGetAllProfiles() 
-      : await db.getProfiles();
-    setProfiles(p);
-  };
-
-  const refreshAppointments = async () => {
-    if (user) {
-      if (user.role === 'admin') {
-        const appts = await db.adminGetAllAppointments();
-        setAppointments(appts);
-      } else {
-        const appts = await db.getAppointments(user.id, user.role);
-        setAppointments(appts);
-      }
-    }
-  };
 
   // Alternar el rol activamente (para pruebas ágiles)
   const setUserRole = async (newRole: 'cliente' | 'prestador' | 'admin') => {
@@ -334,6 +342,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
     setMessages(prev => [...prev, newMsg]);
     refreshProfiles();
+
+    // Configurar y disparar notificación de correo
+    const emailTo = activeContact.email || `${activeContact.name.toLowerCase().replace(/\s+/g, '')}@gmail.com`;
+    const subject = `Nuevo mensaje de ${user.name} en JalpanTrabajo`;
+    const body = `Hola ${activeContact.name},\n\nHas recibido un nuevo mensaje de ${user.name} en la plataforma Bolsa de Trabajo Jalpan de Serra:\n\n"${content}"\n\nPara responder a este mensaje, por favor inicia sesión en la plataforma:\nhttps://bolsa-de-trabajo-jalpan.web.app\n\nAtentamente,\nEl Equipo de JalpanTrabajo`;
+
+    // Intentar envío automático en segundo plano con EmailJS
+    if (isEmailConfigured()) {
+      const sent = await sendEmailBackground({
+        toEmail: emailTo,
+        toName: activeContact.name,
+        subject,
+        body
+      });
+      if (sent) {
+        console.log(`Mensaje de chat notificado por correo en segundo plano a ${activeContact.name}`);
+        return;
+      }
+    }
+
+    setChatEmailNotification({
+      show: true,
+      to: emailTo,
+      recipientName: activeContact.name,
+      senderName: user.name,
+      subject,
+      body,
+      content
+    });
   };
 
   // Agendar un servicio
@@ -396,7 +433,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         lng: -99.4735,
         rating: 5,
         reviewsCount: 0,
-        isActive: isSuperAdmin ? true : false,
+        isActive: isSuperAdmin ? true : (role === 'cliente' ? true : false),
         email: email
       });
       setUser(newMockProfile);
@@ -418,17 +455,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       }), 2500);
       if (error) throw error;
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error al registrarse en Supabase:', err);
-      // Resiliencia: si es un error de red/fetch o timeout, registrar localmente
+      // Resiliencia: si es un error de red/fetch, timeout o rate limit de correos, registrar localmente
+      const errorObj = err as { message?: string; name?: string };
       if (
-        err.message?.includes('fetch') || 
-        err.message?.includes('Network') || 
-        err.message?.includes('Timeout') || 
-        err.message?.includes('timeout') || 
-        err.name === 'TypeError'
+        errorObj?.message?.includes('fetch') || 
+        errorObj?.message?.includes('Network') || 
+        errorObj?.message?.includes('Timeout') || 
+        errorObj?.message?.includes('timeout') || 
+        errorObj?.message?.includes('rate limit') || 
+        errorObj?.message?.includes('limit exceeded') || 
+        errorObj?.name === 'TypeError'
       ) {
-        console.warn('Fallo de red o timeout en Supabase. Creando cuenta local resiliente...');
+        console.warn('Fallo de red, timeout o rate limit en Supabase. Creando cuenta local resiliente...');
         const mockId = 'mock_u_' + Math.random().toString(36).substr(2, 9);
         const isSuperAdmin = email.toLowerCase() === 'josemanuelvillaguillon@gmail.com';
         const newMockProfile = await db.saveProfile({
@@ -444,7 +484,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           lng: -99.4735,
           rating: 5,
           reviewsCount: 0,
-          isActive: isSuperAdmin ? true : false,
+          isActive: isSuperAdmin ? true : (role === 'cliente' ? true : false),
           email: email
         });
         setUser(newMockProfile);
@@ -501,14 +541,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (error) throw error;
       
       await refreshProfiles();
-    } catch (err: any) {
-      console.error('Error al registrar administrador en Supabase:', err);
+    } catch (err) {
+      console.error('Error al registrarse en Supabase:', err);
+      // Resiliencia: si es un error de red/fetch, timeout o rate limit de correos, registrar localmente
+      const errorObj = err as { message?: string; name?: string };
       if (
-        err.message?.includes('fetch') || 
-        err.message?.includes('Network') || 
-        err.message?.includes('Timeout') || 
-        err.message?.includes('timeout') || 
-        err.name === 'TypeError'
+        errorObj?.message?.includes('fetch') || 
+        errorObj?.message?.includes('Network') || 
+        errorObj?.message?.includes('Timeout') || 
+        errorObj?.message?.includes('timeout') || 
+        errorObj?.message?.includes('rate limit') || 
+        errorObj?.message?.includes('limit exceeded') || 
+        errorObj?.name === 'TypeError'
       ) {
         // Fallback local
         const mockId = 'mock_admin_' + Math.random().toString(36).substr(2, 9);
@@ -546,7 +590,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           name: 'José Manuel Villa (Admin)',
           bio: 'Administrador central de la Bolsa de Trabajo Jalpan.'
         };
-        (adminProfile as any).email = 'josemanuelvillaguillon@gmail.com';
+        adminProfile.email = 'josemanuelvillaguillon@gmail.com';
         setUser(adminProfile);
         setRole('admin');
         localStorage.setItem('b_current_user', JSON.stringify(adminProfile));
@@ -576,15 +620,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         password
       }), 2500);
       if (error) throw error;
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error al iniciar sesión en Supabase:', err);
       // Resiliencia: si es un error de red/fetch o timeout, iniciar sesión localmente
+      const errorObj = err as { message?: string; name?: string };
       if (
-        err.message?.includes('fetch') || 
-        err.message?.includes('Network') || 
-        err.message?.includes('Timeout') || 
-        err.message?.includes('timeout') || 
-        err.name === 'TypeError'
+        errorObj?.message?.includes('fetch') || 
+        errorObj?.message?.includes('Network') || 
+        errorObj?.message?.includes('Timeout') || 
+        errorObj?.message?.includes('timeout') || 
+        errorObj?.name === 'TypeError'
       ) {
         console.warn('Fallo de red o timeout en Supabase. Iniciando sesión de forma local...');
         if (email.toLowerCase() === 'josemanuelvillaguillon@gmail.com') {
@@ -594,7 +639,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             name: 'José Manuel Villa (Admin)',
             bio: 'Administrador central de la Bolsa de Trabajo Jalpan.'
           };
-          (adminProfile as any).email = 'josemanuelvillaguillon@gmail.com';
+          adminProfile.email = 'josemanuelvillaguillon@gmail.com';
           setUser(adminProfile);
           setRole('admin');
           localStorage.setItem('b_current_user', JSON.stringify(adminProfile));
@@ -648,16 +693,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await db.adminToggleProfileActive(id, active);
     await refreshProfiles();
     
-    // Si el administrador activa la cuenta, simular el envío de un correo de autorización
+    // Si el administrador activa la cuenta, intentar enviar correo
     if (active) {
       const p = await db.getProfileById(id);
       if (p && p.email) {
+        const subject = '¡Tu perfil ha sido Autorizado y Aprobado! - Bolsa de Trabajo Jalpan';
+        const body = `Estimado/a ${p.name},\n\nNos complace informarte que el administrador ha revisado y autorizado tu cuenta en la Bolsa de Trabajo de Jalpan de Serra.\n\nTu perfil ahora es oficial, público y completamente visible en los mapas interactivos y búsquedas para todos los vecinos de la Sierra Gorda.\n\n¡Mucho éxito en tus contrataciones y servicios!\n\nAtentamente,\nEl Administrador Central\nBolsa de Trabajo Jalpan de Serra`;
+
+        // Intentar envío automático en segundo plano
+        if (isEmailConfigured()) {
+          const sent = await sendEmailBackground({
+            toEmail: p.email,
+            toName: p.name,
+            subject,
+            body
+          });
+          if (sent) {
+            alert(`¡Cuenta activa! Se ha enviado un correo automático de notificación a ${p.name} (${p.email}).`);
+            return;
+          }
+        }
+
+        // Si no está configurado EmailJS o falla, mostrar el simulador modal / mailto fallback
         setAdminNotification({
           show: true,
           to: p.email,
           userName: p.name,
-          subject: '¡Tu perfil ha sido Autorizado y Aprobado! - Bolsa de Trabajo Jalpan',
-          body: `Estimado/a ${p.name},\n\nNos complace informarte que el administrador ha revisado y autorizado tu cuenta en la Bolsa de Trabajo de Jalpan de Serra.\n\nTu perfil ahora es oficial, público y completamente visible en los mapas interactivos y búsquedas para todos los vecinos de la Sierra Gorda.\n\n¡Mucho éxito en tus contrataciones y servicios!\n\nAtentamente,\nEl Administrador Central\nBolsa de Trabajo Jalpan de Serra`
+          subject,
+          body
         });
       }
     }
@@ -711,7 +774,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         deleteReview,
         deleteAppointment,
         adminNotification,
-        setAdminNotification
+        setAdminNotification,
+        chatEmailNotification,
+        setChatEmailNotification
       }}
     >
       {children}
@@ -719,6 +784,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useApp = () => {
   const context = useContext(AppContext);
   if (context === undefined) {

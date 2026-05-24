@@ -1,7 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, Send, X, Bot, User, Calendar, MapPin, DollarSign } from 'lucide-react';
+import { MessageSquare, Send, X, Bot } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { db, Profile, getDistanceKm } from '../services/db';
+import { Profile, getDistanceKm } from '../services/db';
+
+let idCounter = 0;
+const generateUniqueId = (prefix: string): string => {
+  idCounter += 1;
+  return `${prefix}_${Date.now()}_${idCounter}`;
+};
 
 interface BotMessage {
   id: string;
@@ -15,7 +21,7 @@ interface BotMessage {
 export const Chatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
-  const { profiles, clientLocation, setActiveContact, setCurrentView, bookService } = useApp();
+  const { profiles, clientLocation, setActiveContact, setCurrentView, user } = useApp();
   const [chatMessages, setChatMessages] = useState<BotMessage[]>([
     {
       id: 'init',
@@ -45,7 +51,7 @@ export const Chatbot: React.FC = () => {
 
     // Agregar mensaje del usuario
     const userMsg: BotMessage = {
-      id: 'user_' + Date.now(),
+      id: generateUniqueId('user'),
       sender: 'user',
       text: textToSend
     };
@@ -61,7 +67,7 @@ export const Chatbot: React.FC = () => {
 
   const processResponse = (rawInput: string) => {
     const text = rawInput.trim();
-    let reply = '';
+    let reply: string;
     let foundProfiles: Profile[] = [];
     let options: string[] = ['🔍 Buscar Plomero', '⚡ Buscar Electricista', '🪚 Buscar Carpintero', '💰 Cotizar un servicio'];
     let type: BotMessage['type'] = 'general';
@@ -140,7 +146,7 @@ export const Chatbot: React.FC = () => {
     }
 
     const botMsg: BotMessage = {
-      id: 'bot_' + Date.now(),
+      id: generateUniqueId('bot'),
       sender: 'bot',
       text: reply,
       options,
@@ -158,6 +164,11 @@ export const Chatbot: React.FC = () => {
   };
 
   const handleProfileSelect = (p: Profile) => {
+    if (!user) {
+      setCurrentView('auth');
+      setIsOpen(false);
+      return;
+    }
     // Abrir chat directo con ese prestador
     setActiveContact(p);
     setCurrentView('chats');

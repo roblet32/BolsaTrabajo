@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, Star, Phone, Clock, DollarSign, Calendar, MessageSquare, Plus, PenTool } from 'lucide-react';
+import { ChevronLeft, Star, Phone, Clock, DollarSign, Calendar, MessageSquare } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { db, Profile, Review } from '../services/db';
 

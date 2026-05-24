@@ -10,7 +10,7 @@ import ChatPanel from './components/ChatPanel';
 import Chatbot from './components/Chatbot';
 import AuthView from './components/AuthView';
 import AdminDashboard from './components/AdminDashboard';
-import { Search, MapPin, Star, Phone, MessageSquare, Shield, HelpCircle } from 'lucide-react';
+import { Search, MapPin, Star, HelpCircle } from 'lucide-react';
 import { Profile, getDistanceKm } from './services/db';
 
 const MainAppContent: React.FC = () => {
@@ -25,16 +25,37 @@ const MainAppContent: React.FC = () => {
     clientLocation,
     user,
     adminNotification,
-    setAdminNotification
+    setAdminNotification,
+    chatEmailNotification
   } = useApp();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDetailProfile, setSelectedDetailProfile] = useState<Profile | null>(null);
 
+  // Estados responsivos y de notificación premium
+  const [searchViewMode, setSearchViewMode] = useState<'list' | 'map'>('list');
+  const [showMailSimulator, setShowMailSimulator] = useState(false);
+  const [showChatToast, setShowChatToast] = useState(false);
+
+  // Autodescartar Toast de Correo después de 8 segundos
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (chatEmailNotification && chatEmailNotification.show) {
+      setShowChatToast(true);
+      const timer = setTimeout(() => {
+        setShowChatToast(false);
+      }, 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [chatEmailNotification]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
   // Limpiar el perfil seleccionado al cambiar de pestaña o de rol
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setSelectedDetailProfile(null);
   }, [currentView, role]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Filtrar prestadores según categoría, texto y distancia del cliente
   const filteredProfiles = profiles.filter((p) => {
@@ -55,12 +76,19 @@ const MainAppContent: React.FC = () => {
       if (!matchName && !matchBio && !matchCat) return false;
     }
 
-    // Filtro por Geolocalización y Distancia Máxima
+    // Filtro por Geolocalización y Distancia Máxima con validaciones robustas
+    const cLat = typeof clientLocation?.lat === 'number' && !isNaN(clientLocation.lat) ? clientLocation.lat : 21.2185;
+    const cLng = typeof clientLocation?.lng === 'number' && !isNaN(clientLocation.lng) ? clientLocation.lng : -99.4735;
+    const pLat = typeof p.lat === 'number' && !isNaN(p.lat) ? p.lat : null;
+    const pLng = typeof p.lng === 'number' && !isNaN(p.lng) ? p.lng : null;
+
+    if (pLat === null || pLng === null) return false;
+
     const distance = getDistanceKm(
-      clientLocation.lat,
-      clientLocation.lng,
-      p.lat,
-      p.lng
+      cLat,
+      cLng,
+      pLat,
+      pLng
     );
     if (distance > searchDistance) {
       return false;
@@ -89,13 +117,15 @@ const MainAppContent: React.FC = () => {
         return (
           <div className="dashboard-layout" style={{ flex: 1 }}>
             {/* Mapa Izquierdo */}
-            <ServiceMap
-              filteredProfiles={filteredProfiles}
-              onSelectProfile={setSelectedDetailProfile}
-            />
+            <div className={`map-wrapper ${searchViewMode === 'map' ? 'mobile-show' : 'mobile-hide'}`} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+              <ServiceMap
+                filteredProfiles={filteredProfiles}
+                onSelectProfile={setSelectedDetailProfile}
+              />
+            </div>
 
             {/* Listado y Filtros Derechos */}
-            <div className="providers-panel">
+            <div className={`providers-panel ${searchViewMode === 'list' ? 'mobile-show' : 'mobile-hide'}`}>
               <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <h3 style={{ fontSize: '1.1rem', color: 'var(--text-dark-primary)' }}>Filtros de Búsqueda</h3>
                 
@@ -211,6 +241,22 @@ const MainAppContent: React.FC = () => {
                   );
                 })
               )}
+            </div>
+
+            {/* Alternador de vista móvil */}
+            <div className="mobile-view-toggle">
+              <button
+                className={`toggle-btn ${searchViewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setSearchViewMode('list')}
+              >
+                Lista
+              </button>
+              <button
+                className={`toggle-btn ${searchViewMode === 'map' ? 'active' : ''}`}
+                onClick={() => setSearchViewMode('map')}
+              >
+                Mapa
+              </button>
             </div>
           </div>
         );
@@ -358,9 +404,26 @@ const MainAppContent: React.FC = () => {
               background: 'rgba(255, 255, 255, 0.02)',
               borderTop: '1px solid rgba(255, 255, 255, 0.05)',
               display: 'flex',
-              gap: '0.75rem',
-              justifyContent: 'end'
+              flexDirection: 'column',
+              gap: '1rem'
             }}>
+              <div style={{
+                fontSize: '0.75rem',
+                color: 'rgba(255, 255, 255, 0.5)',
+                textAlign: 'left',
+                lineHeight: '1.4',
+                background: 'rgba(0, 0, 0, 0.15)',
+                padding: '0.65rem 0.85rem',
+                borderRadius: '6px',
+                borderLeft: '3px solid #0d9488'
+              }}>
+                💡 <strong>Desarrollo:</strong> El botón <em>"Enviar por Correo Real"</em> intenta abrir la app de correo de tu PC (mailto:). Para enviar estos correos <strong>100% automático en segundo plano</strong> (sin ventanas emergentes), puedes configurar EmailJS en tu archivo <code>.env</code>.
+              </div>
+              <div style={{
+                display: 'flex',
+                gap: '0.75rem',
+                justifyContent: 'end'
+              }}>
               {/* Botón Mailto Real */}
               <a
                 href={`mailto:${adminNotification.to}?subject=${encodeURIComponent(adminNotification.subject)}&body=${encodeURIComponent(adminNotification.body)}`}
@@ -395,6 +458,104 @@ const MainAppContent: React.FC = () => {
               >
                 Entendido
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
+      {/* Toast de Notificación de Correo (Mensajes de Chat) */}
+      {chatEmailNotification && chatEmailNotification.show && showChatToast && (
+        <div className="chat-email-toast">
+          <div className="chat-email-toast-header">
+            <div className="chat-email-toast-title">
+              <span className="email-ping-icon">📧</span>
+              <span>Notificación de correo enviada</span>
+            </div>
+            <button
+              className="chat-email-toast-close"
+              onClick={() => setShowChatToast(false)}
+              title="Cerrar"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="chat-email-toast-body">
+            Se ha notificado a <strong>{chatEmailNotification.recipientName}</strong> ({chatEmailNotification.to}) sobre tu mensaje en el chat.
+          </div>
+          <div className="chat-email-toast-actions">
+            <button
+              className="chat-email-toast-btn-sim"
+              onClick={() => {
+                setShowChatToast(false);
+                setShowMailSimulator(true);
+              }}
+            >
+              Ver Simulación
+            </button>
+            <a
+              className="chat-email-toast-btn-real"
+              href={`mailto:${chatEmailNotification.to}?subject=${encodeURIComponent(chatEmailNotification.subject)}&body=${encodeURIComponent(chatEmailNotification.body)}`}
+              onClick={() => setShowChatToast(false)}
+            >
+              Enviar Correo Real
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* Visor de Correo Simulado */}
+      {chatEmailNotification && chatEmailNotification.show && showMailSimulator && (
+        <div className="mail-simulator-backdrop">
+          <div className="mail-simulator-container">
+            {/* Barra superior estilo MacOS */}
+            <div className="mail-simulator-header-bar">
+              <div className="mail-simulator-dots">
+                <span className="mail-simulator-dot red" onClick={() => setShowMailSimulator(false)} style={{ cursor: 'pointer' }}></span>
+                <span className="mail-simulator-dot yellow" onClick={() => setShowMailSimulator(false)} style={{ cursor: 'pointer' }}></span>
+                <span className="mail-simulator-dot green" onClick={() => setShowMailSimulator(false)} style={{ cursor: 'pointer' }}></span>
+              </div>
+              <div className="mail-simulator-header-title">Bandeja de Entrada Simulada</div>
+            </div>
+
+            {/* Meta información */}
+            <div className="mail-simulator-client-meta">
+              <div className="mail-simulator-meta-row">
+                <span className="mail-simulator-meta-label">De:</span>
+                <span className="mail-simulator-meta-val">JalpanTrabajo Notificaciones &lt;no-reply@jalpantrabajo.com&gt;</span>
+              </div>
+              <div className="mail-simulator-meta-row">
+                <span className="mail-simulator-meta-label">Para:</span>
+                <span className="mail-simulator-meta-val email-highlight">{chatEmailNotification.recipientName} &lt;{chatEmailNotification.to}&gt;</span>
+              </div>
+              <div className="mail-simulator-meta-row">
+                <span className="mail-simulator-meta-label">Asunto:</span>
+                <span className="mail-simulator-meta-val subject-highlight">{chatEmailNotification.subject}</span>
+              </div>
+            </div>
+
+            {/* Cuerpo del Mensaje */}
+            <div className="mail-simulator-body">
+              {chatEmailNotification.body}
+            </div>
+
+            {/* Acciones */}
+            <div className="mail-simulator-actions">
+              <button
+                className="btn-secondary"
+                onClick={() => setShowMailSimulator(false)}
+                style={{ fontSize: '0.85rem', padding: '0.55rem 1.25rem', borderRadius: '6px' }}
+              >
+                Cerrar Simulación
+              </button>
+              <a
+                className="chat-email-toast-btn-real"
+                href={`mailto:${chatEmailNotification.to}?subject=${encodeURIComponent(chatEmailNotification.subject)}&body=${encodeURIComponent(chatEmailNotification.body)}`}
+                onClick={() => setShowMailSimulator(false)}
+                style={{ fontSize: '0.85rem', padding: '0.55rem 1.25rem', borderRadius: '6px', textDecoration: 'none', display: 'inline-flex' }}
+              >
+                Enviar Correo Real
+              </a>
             </div>
           </div>
         </div>

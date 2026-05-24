@@ -9,7 +9,7 @@ export const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 export const isSupabaseConfigured = 
   supabaseUrl.length > 0 && 
   supabaseAnonKey.length > 0 && 
-  supabaseAnonKey.startsWith('eyJ');
+  (supabaseAnonKey.startsWith('eyJ') || supabaseAnonKey.startsWith('sb_'));
 
 export const supabase = isSupabaseConfigured 
   ? createClient(supabaseUrl, supabaseAnonKey) 
@@ -19,7 +19,7 @@ export const supabase = isSupabaseConfigured
  * Envuelve una promesa en un límite de tiempo para evitar bloqueos infinitos
  * si las credenciales son incorrectas o la red está colgada.
  */
-export const withTimeout = <T = any>(promise: any, timeoutMs: number = 2500): Promise<T> => {
+export const withTimeout = <T>(promise: Promise<T> | PromiseLike<T> | T, timeoutMs: number = 2500): Promise<T> => {
   return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => {
       reject(new TypeError('Timeout de conexión con Supabase'));
@@ -28,7 +28,7 @@ export const withTimeout = <T = any>(promise: any, timeoutMs: number = 2500): Pr
     Promise.resolve(promise)
       .then((res) => {
         clearTimeout(timer);
-        resolve(res as T);
+        resolve(res);
       })
       .catch((err) => {
         clearTimeout(timer);

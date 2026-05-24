@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { User, Phone, DollarSign, Clock, FileText, CheckCircle, Star, MapPin, Briefcase, Plus, Trash2, Image, Sparkles, Map, Globe } from 'lucide-react';
+import { User, CheckCircle, Star, MapPin, Briefcase, Plus, Trash2, Image, Sparkles, Globe } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { LocationPicker } from './LocationPicker';
-import { Profile } from '../services/db';
 
 const PHOTO_PRESETS = [
   { label: '🔧 Plomería', url: 'https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=600&auto=format&fit=crop&q=60' },
@@ -31,6 +30,7 @@ export const ProviderDashboard: React.FC = () => {
   const [isUpgrading, setIsUpgrading] = useState(false);
 
   // Cargar datos actuales del usuario al iniciar o cambiar
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (user) {
       setName(user.name || '');
@@ -44,6 +44,7 @@ export const ProviderDashboard: React.FC = () => {
       setWorkPhotos(user.workPhotos || []);
     }
   }, [user]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleCategoryToggle = (category: string) => {
     setSelectedCategories(prev =>

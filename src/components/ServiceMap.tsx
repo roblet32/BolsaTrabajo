@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { useApp } from '../context/AppContext';
 import { Profile, getDistanceKm } from '../services/db';
 
@@ -58,12 +59,22 @@ const getProviderIcon = (categories: string[]) => {
   return defaultProviderIcon;
 };
 
-// Componente para actualizar dinámicamente el centro del mapa al mover al cliente
-const ChangeMapView: React.FC<{ coords: { lat: number; lng: number } }> = ({ coords }) => {
+// Componente controlador para reajustar el mapa y recalcular su tamaño de forma robusta
+const MapController: React.FC<{ coords: { lat: number; lng: number } }> = ({ coords }) => {
   const map = useMap();
+
+  useEffect(() => {
+    // Forzar redibujado de Leaflet para prevenir que se renderice vacío o cortado
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [map]);
+
   useEffect(() => {
     map.setView([coords.lat, coords.lng], map.getZoom());
   }, [coords, map]);
+
   return null;
 };
 
@@ -76,10 +87,18 @@ export const ServiceMap: React.FC<ServiceMapProps> = ({
   filteredProfiles,
   onSelectProfile
 }) => {
-  const { clientLocation, searchDistance, setActiveContact, setCurrentView, theme } = useApp();
+  const { clientLocation, searchDistance, setActiveContact, setCurrentView, theme, user } = useApp();
+
+  // Validación de coordenadas del cliente con fallback para evitar crashes en Leaflet
+  const lat = typeof clientLocation?.lat === 'number' && !isNaN(clientLocation.lat) ? clientLocation.lat : 21.2185;
+  const lng = typeof clientLocation?.lng === 'number' && !isNaN(clientLocation.lng) ? clientLocation.lng : -99.4735;
 
   const handleQuickChat = (p: Profile, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!user) {
+      setCurrentView('auth');
+      return;
+    }
     setActiveContact(p);
     setCurrentView('chats');
   };
@@ -87,7 +106,7 @@ export const ServiceMap: React.FC<ServiceMapProps> = ({
   return (
     <div className="map-panel glass-card">
       <MapContainer
-        center={[clientLocation.lat, clientLocation.lng]}
+        center={[lat, lng]}
         zoom={14}
         scrollWheelZoom={true}
         style={{ height: '100%', width: '100%', borderRadius: '16px' }}
@@ -103,18 +122,20 @@ export const ServiceMap: React.FC<ServiceMapProps> = ({
               />
             );
           } else {
-            const cartoStyle = theme === 'light' ? 'voyager' : 'dark_all';
+            const tileUrl = theme === 'light'
+              ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+              : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
             return (
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                url={`https://{s}.basemaps.cartocdn.com/rastertiles/${cartoStyle}/{z}/{x}/{y}{r}.png`}
+                url={tileUrl}
               />
             );
           }
         })()}
 
         {/* Marcador del Cliente */}
-        <Marker position={[clientLocation.lat, clientLocation.lng]} icon={clientIcon}>
+        <Marker position={[lat, lng]} icon={clientIcon}>
           <Popup>
             <div style={{ color: 'var(--text-dark-primary)', fontWeight: 'bold' }}>Tu Ubicación Actual</div>
           </Popup>
@@ -122,7 +143,7 @@ export const ServiceMap: React.FC<ServiceMapProps> = ({
 
         {/* Círculo que representa el Radio de Búsqueda */}
         <Circle
-          center={[clientLocation.lat, clientLocation.lng]}
+          center={[lat, lng]}
           radius={searchDistance * 1000} // Convertir Km a Metros
           pathOptions={{
             color: '#14b8a6',
@@ -135,17 +156,21 @@ export const ServiceMap: React.FC<ServiceMapProps> = ({
 
         {/* Marcadores de los Prestadores de Servicios */}
         {filteredProfiles.map((p) => {
+          const pLat = typeof p.lat === 'number' && !isNaN(p.lat) ? p.lat : null;
+          const pLng = typeof p.lng === 'number' && !isNaN(p.lng) ? p.lng : null;
+          if (pLat === null || pLng === null) return null;
+
           const distance = getDistanceKm(
-            clientLocation.lat,
-            clientLocation.lng,
-            p.lat,
-            p.lng
+            lat,
+            lng,
+            pLat,
+            pLng
           );
 
           return (
             <Marker
               key={p.id}
-              position={[p.lat, p.lng]}
+              position={[pLat, pLng]}
               icon={getProviderIcon(p.categories)}
             >
               <Popup>
@@ -203,7 +228,7 @@ export const ServiceMap: React.FC<ServiceMapProps> = ({
           );
         })}
 
-        <ChangeMapView coords={clientLocation} />
+        <MapController coords={{ lat, lng }} />
       </MapContainer>
     </div>
   );

@@ -12,7 +12,6 @@ import {
   ShieldAlert, 
   CheckCircle2, 
   AlertOctagon, 
-  Settings, 
   Shield, 
   X, 
   Star, 
@@ -26,7 +25,7 @@ import {
   Clock 
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { db, Profile, Review, Appointment } from '../services/db';
+import { db, Profile, Review } from '../services/db';
 
 export const AdminDashboard: React.FC = () => {
   const { 
@@ -91,9 +90,13 @@ export const AdminDashboard: React.FC = () => {
       setAdminPhone('');
       setAdminEmail('');
       setAdminPassword('');
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setAdminError(err.message || 'Error al registrar al administrador.');
+      let errMsg = err instanceof Error ? err.message : 'Error al registrar al administrador.';
+      if (errMsg.toLowerCase().includes('rate limit') || errMsg.toLowerCase().includes('limit exceeded')) {
+        errMsg = 'Límite de correos de Supabase excedido. Para solucionar esto en desarrollo, desactiva la opción "Confirm email" en el panel de Supabase (Authentication -> Providers -> Email -> Confirm email: OFF).';
+      }
+      setAdminError(errMsg);
     } finally {
       setAdminLoading(false);
     }
@@ -112,9 +115,11 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     loadReviews();
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleGlobalRefresh = async () => {
     setIsRefreshing(true);
@@ -528,7 +533,7 @@ export const AdminDashboard: React.FC = () => {
                   <select
                     className="filter-select"
                     value={userRoleFilter}
-                    onChange={(e: any) => setUserRoleFilter(e.target.value)}
+                    onChange={(e) => setUserRoleFilter(e.target.value as 'todos' | 'cliente' | 'prestador' | 'admin')}
                     style={{ minWidth: '130px' }}
                   >
                     <option value="todos">Todos los Roles</option>
@@ -544,7 +549,7 @@ export const AdminDashboard: React.FC = () => {
                   <select
                     className="filter-select"
                     value={userStatusFilter}
-                    onChange={(e: any) => setUserStatusFilter(e.target.value)}
+                    onChange={(e) => setUserStatusFilter(e.target.value as 'todos' | 'activos' | 'suspendidos')}
                     style={{ minWidth: '130px' }}
                   >
                     <option value="todos">Todos los Estados</option>
@@ -919,7 +924,7 @@ export const AdminDashboard: React.FC = () => {
               <select
                 className="filter-select"
                 value={apptStatusFilter}
-                onChange={(e: any) => setApptStatusFilter(e.target.value)}
+                onChange={(e) => setApptStatusFilter(e.target.value as 'todos' | 'pendiente' | 'aceptada' | 'completada' | 'cancelada')}
                 style={{ minWidth: '150px' }}
               >
                 <option value="todos">Todos los Estados</option>

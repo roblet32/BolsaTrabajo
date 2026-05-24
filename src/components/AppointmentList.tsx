@@ -8,6 +8,7 @@ export const AppointmentList: React.FC = () => {
 
   useEffect(() => {
     refreshAppointments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, role]);
 
   const handleStatusUpdate = async (id: string, status: Appointment['status']) => {

@@ -1,4 +1,4 @@
-import { Briefcase, Map, Calendar, MessageSquare, Home, LogIn, LogOut, User, Sun, Moon, Shield } from 'lucide-react';
+import { Briefcase, Map, Calendar, MessageSquare, Home, LogIn, LogOut, Sun, Moon, Shield } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { isSupabaseConfigured } from '../services/supabaseClient';
 
@@ -34,15 +34,17 @@ export const Navbar: React.FC = () => {
           <span>Buscar Servicios</span>
         </button>
 
-        {/* Mi Panel de Proveedor (Siempre visible) */}
-        <button
-          className={`nav-item ${currentView === 'proveedor' ? 'active' : ''}`}
-          onClick={() => setCurrentView('proveedor')}
-          id="nav_btn_proveedor"
-        >
-          <Briefcase size={18} />
-          <span>Mi Panel de Proveedor</span>
-        </button>
+        {/* Mi Panel de Proveedor (Visible para prestadores o administradores) */}
+        {role !== 'cliente' && (
+          <button
+            className={`nav-item ${currentView === 'proveedor' ? 'active' : ''}`}
+            onClick={() => setCurrentView('proveedor')}
+            id="nav_btn_proveedor"
+          >
+            <Briefcase size={18} />
+            <span>Mi Panel de Proveedor</span>
+          </button>
+        )}
 
         {/* Citas y Mensajes solo accesibles si está logueado en modo real */}
         <button
@@ -129,11 +131,12 @@ export const Navbar: React.FC = () => {
               </div>
             </div>
 
-            {/* Switcher de Roles (Visible únicamente para el Administrador para pruebas y depuración) */}
+            {/* Switcher de Roles (Visible para Administrador o siempre en modo local/pruebas) */}
             {user && (
               user.role === 'admin' || 
-              (user as any).email?.toLowerCase() === 'josemanuelvillaguillon@gmail.com' ||
-              localStorage.getItem('b_is_super_admin') === 'true'
+              user.email?.toLowerCase() === 'josemanuelvillaguillon@gmail.com' ||
+              localStorage.getItem('b_is_super_admin') === 'true' ||
+              !isSupabaseConfigured
             ) && (
               <div className="role-switcher-container">
                 <button

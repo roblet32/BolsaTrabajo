@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mail, Lock, User, Phone, Shield, ArrowRight, Briefcase } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const AuthView: React.FC<{ onAuthSuccess?: () => void }> = ({ onAuthSuccess }) => {
-  const { signIn, signUp, setCurrentView } = useApp();
+  const { signIn, signUp, setCurrentView, user } = useApp();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,6 +13,13 @@ export const AuthView: React.FC<{ onAuthSuccess?: () => void }> = ({ onAuthSucce
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // Redirigir automáticamente si el usuario ya inició sesión
+  useEffect(() => {
+    if (user) {
+      setCurrentView('inicio');
+    }
+  }, [user, setCurrentView]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,9 +46,13 @@ export const AuthView: React.FC<{ onAuthSuccess?: () => void }> = ({ onAuthSucce
         setPassword('');
         alert('¡Registro exitoso! Ya puedes iniciar sesión con tu cuenta.');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err.message || 'Ocurrió un error inesperado. Inténtalo de nuevo.');
+      let errMsg = err instanceof Error ? err.message : 'Ocurrió un error inesperado. Inténtalo de nuevo.';
+      if (errMsg.toLowerCase().includes('rate limit') || errMsg.toLowerCase().includes('limit exceeded')) {
+        errMsg = 'Límite de correos de Supabase excedido (email rate limit exceeded). Para solucionar esto en desarrollo, desactiva la opción "Confirm email" en el panel de Supabase (Authentication -> Providers -> Email -> Confirm email: OFF) para registrarte sin límites ni esperas.';
+      }
+      setError(errMsg);
     } finally {
       setLoading(false);
     }

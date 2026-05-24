@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, MessageSquare, User, Briefcase, AlertCircle } from 'lucide-react';
+import { Send, MessageSquare, AlertCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { db, Profile } from '../services/db';
 
@@ -23,6 +23,7 @@ export const ChatPanel: React.FC = () => {
       }
     };
     loadContacts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, messages]);
 
   // Scroll al final
