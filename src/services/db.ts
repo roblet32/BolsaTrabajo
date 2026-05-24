@@ -299,9 +299,6 @@ function mapProfileToDb(profile: Partial<Profile>): DbProfile {
   if ('workPhotos' in profile) {
     data.work_photos = profile.workPhotos;
   }
-  if ('suspensionReason' in profile) {
-    data.suspension_reason = profile.suspensionReason;
-  }
   return data as DbProfile;
 }
 
@@ -456,7 +453,8 @@ export const db = {
         const dbProfile = mapProfileToDb(profile);
         // Extraemos 'id' para evitar enviarlo en el cuerpo del UPDATE (ya que es la clave primaria e inmutable)
         // y prevenir cualquier restricción de mutabilidad o de políticas RLS.
-        const { id, ...updateData } = dbProfile;
+        const updateData: Partial<DbProfile> = { ...dbProfile };
+        delete updateData.id;
 
         // Primero intentamos una operación de UPDATE directa, que es más segura bajo políticas RLS restrictivas
         // y previene problemas con columnas not-null en actualizaciones parciales.

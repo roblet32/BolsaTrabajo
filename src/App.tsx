@@ -33,7 +33,6 @@ const MainAppContent: React.FC = () => {
   const [selectedDetailProfile, setSelectedDetailProfile] = useState<Profile | null>(null);
 
   // Estados responsivos y de notificación premium
-  const [searchViewMode, setSearchViewMode] = useState<'list' | 'map'>('list');
   const [showMailSimulator, setShowMailSimulator] = useState(false);
   const [showChatToast, setShowChatToast] = useState(false);
 
@@ -60,7 +59,8 @@ const MainAppContent: React.FC = () => {
   // Filtrar prestadores según categoría, texto y distancia del cliente
   const filteredProfiles = profiles.filter((p) => {
     if (p.role !== 'prestador') return false;
-    if (p.isActive === false) return false; // Ocultar prestadores suspendidos o inactivos
+    // Ocultar prestadores inactivos o suspendidos, excepto al propio usuario logueado para que pueda probar y previsualizar sus cambios de inmediato
+    if (p.isActive === false && (!user || user.id !== p.id)) return false;
 
     // Filtro por Categoría
     if (searchCategory && !p.categories.some((cat) => cat.toLowerCase() === searchCategory.toLowerCase())) {
@@ -117,7 +117,7 @@ const MainAppContent: React.FC = () => {
         return (
           <div className="dashboard-layout" style={{ flex: 1 }}>
             {/* Mapa Izquierdo */}
-            <div className="map-wrapper" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div className="map-wrapper" style={{ display: 'flex', flexDirection: 'column', width: '100%', minHeight: '550px' }}>
               <ServiceMap
                 filteredProfiles={filteredProfiles}
                 onSelectProfile={setSelectedDetailProfile}
@@ -125,7 +125,7 @@ const MainAppContent: React.FC = () => {
             </div>
 
             {/* Listado y Filtros Derechos */}
-            <div className="providers-panel">
+            <div className="providers-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
               <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <h3 style={{ fontSize: '1.1rem', color: 'var(--text-dark-primary)' }}>Filtros de Búsqueda</h3>
                 
@@ -195,7 +195,14 @@ const MainAppContent: React.FC = () => {
                     <div key={p.id} className="glass-card provider-card">
                       <div className="provider-card-header">
                         <div className="provider-info-block">
-                          <h3>{p.name}</h3>
+                          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            {p.name}
+                            {p.isActive === false && (
+                              <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', fontSize: '0.65rem', padding: '0.15rem 0.4rem', fontWeight: 'bold' }}>
+                                Vista Previa
+                              </span>
+                            )}
+                          </h3>
                           <div className="provider-badge-list">
                             {p.categories.map((cat) => (
                               <span key={cat} className="badge badge-primary">

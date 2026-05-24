@@ -1,21 +1,6 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import React, { useState, useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { useApp } from '../context/AppContext';
-
-// Corregir bug de iconos de Leaflet en compilaciones de Vite/React
-delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
-
-interface LocationPickerProps {
-  initialLat: number;
-  initialLng: number;
-  onLocationChange: (lat: number, lng: number) => void;
-}
 
 // Icono personalizado para el prestador en edición
 const providerEditIcon = new L.Icon({
@@ -43,7 +28,6 @@ const parseCoordinates = (input: string): { lat: number; lng: number } | null =>
   }
 
   // 2. Intentar buscar coordenadas en un URL de Google Maps (formato @lat,lng,zoom o q=lat,lng)
-  // Ej: https://www.google.com/maps/@21.2185,-99.4735,15z
   const urlRegex1 = /@(-?\d+(\.\d+)?),(-?\d+(\.\d+)?)/;
   const match1 = input.match(urlRegex1);
   if (match1) {
@@ -54,7 +38,6 @@ const parseCoordinates = (input: string): { lat: number; lng: number } | null =>
     }
   }
 
-  // Ej: https://www.google.com/maps/place/21.2185,-99.4735
   const urlRegex2 = /[?&/](?:q|query|ll|saddr|daddr|place|center)=?(-?\d+(\.\d+)?),(-?\d+(\.\d+)?)/;
   const match2 = input.match(urlRegex2);
   if (match2) {
@@ -79,29 +62,11 @@ const parseCoordinates = (input: string): { lat: number; lng: number } | null =>
   return null;
 };
 
-interface MapEventsProps {
-  onMapClick: (lat: number, lng: number) => void;
+interface LocationPickerProps {
+  initialLat: number;
+  initialLng: number;
+  onLocationChange: (lat: number, lng: number) => void;
 }
-
-const MapEvents: React.FC<MapEventsProps> = ({ onMapClick }) => {
-  useMapEvents({
-    click(e) {
-      onMapClick(e.latlng.lat, e.latlng.lng);
-    }
-  });
-  return null;
-};
-
-// Componente controlador para reajustar el mapa cuando cambian las coordenadas
-const MapController: React.FC<{ coords: [number, number] }> = ({ coords }) => {
-  const map = useMap();
-
-  useEffect(() => {
-    map.setView(coords, map.getZoom());
-  }, [coords, map]);
-
-  return null;
-};
 
 export const LocationPicker: React.FC<LocationPickerProps> = ({
   initialLat,
@@ -109,46 +74,137 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
   onLocationChange
 }) => {
   const { theme } = useApp();
-  const [position, setPosition] = useState<[number, number]>([
-    initialLat || 21.2185,
-    initialLng || -99.4735
-  ]);
   const [urlInput, setUrlInput] = useState('');
   const [parseError, setParseError] = useState('');
+  
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markerInstanceRef = useRef<L.Marker | null>(null);
 
-  const markerRef = useRef<L.Marker>(null);
+  // Inicializar mapa nativo una sola vez
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
 
-  // Manejar el arrastre del pin
-  const eventHandlers = useMemo(
-    () => ({
-      dragend() {
-        const marker = markerRef.current;
-        if (marker != null) {
-          const latLng = marker.getLatLng();
-          setPosition([latLng.lat, latLng.lng]);
-          onLocationChange(latLng.lat, latLng.lng);
-          setUrlInput(`${latLng.lat.toFixed(6)}, ${latLng.lng.toFixed(6)}`);
-          setParseError('');
-        }
-      },
-    }),
-    [onLocationChange]
-  );
+    const startLat = initialLat || 21.2185;
+    const startLng = initialLng || -99.4735;
 
-  const handleMapClick = (lat: number, lng: number) => {
-    setPosition([lat, lng]);
-    onLocationChange(lat, lng);
-    setUrlInput(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-    setParseError('');
-  };
+    // Crear el mapa nativo de Leaflet
+    const map = L.map(mapContainerRef.current, {
+      center: [startLat, startLng],
+      zoom: 15,
+      zoomControl: true,
+    });
 
-  // Sincronizar posición y campo de entrada cuando cambian externamente
+    // Cargar capa de azulejos (tiles)
+    const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || '';
+    let tileLayer: L.TileLayer;
+
+    if (mapboxToken) {
+      const styleId = theme === 'light' ? 'light-v11' : 'dark-v11';
+      tileLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/${styleId}/tiles/{z}/{x}/{y}?access_token=${mapboxToken}`, {
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
+      });
+    } else {
+      const tileUrl = theme === 'light'
+        ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+      tileLayer = L.tileLayer(tileUrl, {
+        attribution: '&copy; <a href="https://carto.com/">CARTO</a>'
+      });
+    }
+    tileLayer.addTo(map);
+
+    // Crear marcador arrastrable
+    const marker = L.marker([startLat, startLng], {
+      draggable: true,
+      icon: providerEditIcon
+    }).addTo(map);
+
+    // Escuchar el arrastre del pin
+    marker.on('dragend', () => {
+      const latLng = marker.getLatLng();
+      onLocationChange(latLng.lat, latLng.lng);
+      setUrlInput(`${latLng.lat.toFixed(6)}, ${latLng.lng.toFixed(6)}`);
+      setParseError('');
+    });
+
+    // Escuchar clics en el mapa para mover el pin
+    map.on('click', (e) => {
+      marker.setLatLng(e.latlng);
+      onLocationChange(e.latlng.lat, e.latlng.lng);
+      setUrlInput(`${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`);
+      setParseError('');
+    });
+
+    mapInstanceRef.current = map;
+    markerInstanceRef.current = marker;
+
+    // Forzar recalcular tamaño tras montar para evitar cortes y pantallas grises
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 250);
+
+    return () => {
+      clearTimeout(timer);
+      map.remove();
+      mapInstanceRef.current = null;
+      markerInstanceRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo al montar
+
+  // Sincronizar coordenadas desde el padre
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const targetLat = initialLat || 21.2185;
     const targetLng = initialLng || -99.4735;
-    setPosition([targetLat, targetLng]);
+    
+    if (mapInstanceRef.current && markerInstanceRef.current) {
+      const marker = markerInstanceRef.current;
+      const map = mapInstanceRef.current;
+      const currentLatLng = marker.getLatLng();
+      
+      if (currentLatLng.lat !== targetLat || currentLatLng.lng !== targetLng) {
+        marker.setLatLng([targetLat, targetLng]);
+        map.setView([targetLat, targetLng], map.getZoom());
+      }
+    }
+    
     setUrlInput(`${targetLat.toFixed(6)}, ${targetLng.toFixed(6)}`);
   }, [initialLat, initialLng]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  // Manejar el cambio de tema de los mapas dinámicamente
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    const map = mapInstanceRef.current;
+    
+    // Remover todas las capas de azulejos existentes
+    map.eachLayer((layer) => {
+      if (layer instanceof L.TileLayer) {
+        map.removeLayer(layer);
+      }
+    });
+
+    // Añadir nueva capa con el tema correcto
+    const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || '';
+    let tileLayer: L.TileLayer;
+
+    if (mapboxToken) {
+      const styleId = theme === 'light' ? 'light-v11' : 'dark-v11';
+      tileLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/${styleId}/tiles/{z}/{x}/{y}?access_token=${mapboxToken}`, {
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
+      });
+    } else {
+      const tileUrl = theme === 'light'
+        ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+      tileLayer = L.tileLayer(tileUrl, {
+        attribution: '&copy; <a href="https://carto.com/">CARTO</a>'
+      });
+    }
+    tileLayer.addTo(map);
+  }, [theme]);
 
   const handleUrlInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -159,7 +215,10 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
     }
     const coords = parseCoordinates(val);
     if (coords) {
-      setPosition([coords.lat, coords.lng]);
+      if (mapInstanceRef.current && markerInstanceRef.current) {
+        markerInstanceRef.current.setLatLng([coords.lat, coords.lng]);
+        mapInstanceRef.current.setView([coords.lat, coords.lng], mapInstanceRef.current.getZoom());
+      }
       onLocationChange(coords.lat, coords.lng);
       setParseError('');
     } else {
@@ -201,46 +260,9 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
         )}
       </div>
 
-      {/* Contenedor del Mapa */}
+      {/* Contenedor del Mapa Nativo */}
       <div style={{ height: '320px', width: '100%', borderRadius: '12px', overflow: 'hidden', position: 'relative', border: '1px solid var(--bg-dark-card-border)' }}>
-        <MapContainer
-          center={position}
-          zoom={15}
-          scrollWheelZoom={true}
-          style={{ height: '100%', width: '100%' }}
-        >
-          {(() => {
-            const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || '';
-            if (mapboxToken) {
-              const styleId = theme === 'light' ? 'light-v11' : 'dark-v11';
-              return (
-                <TileLayer
-                  attribution='Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>'
-                  url={`https://api.mapbox.com/styles/v1/mapbox/${styleId}/tiles/{z}/{x}/{y}?access_token=${mapboxToken}`}
-                />
-              );
-            } else {
-              const tileUrl = theme === 'light'
-                ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-                : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-              return (
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                  url={tileUrl}
-                />
-              );
-            }
-          })()}
-          <Marker
-            draggable={true}
-            eventHandlers={eventHandlers}
-            position={position}
-            ref={markerRef}
-            icon={providerEditIcon}
-          />
-          <MapEvents onMapClick={handleMapClick} />
-          <MapController coords={position} />
-        </MapContainer>
+        <div ref={mapContainerRef} style={{ height: '100%', width: '100%', zIndex: 5 }} />
       </div>
       <div style={{ fontSize: '0.8rem', color: '#94a3b8', textAlign: 'center' }}>
         * Arrastra el marcador verde o haz clic en cualquier parte del mapa para marcar tu ubicación exacta.

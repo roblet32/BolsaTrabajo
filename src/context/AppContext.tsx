@@ -303,6 +303,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setCurrentView('inicio');
     }
     setActiveContact(null);
+    await refreshProfiles();
   };
 
   // Iniciar sesión como un usuario específico de la base de datos (Demo)
@@ -317,6 +318,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem('b_current_user', JSON.stringify(profile));
       setActiveContact(null);
       setCurrentView('inicio');
+      await refreshProfiles();
     }
   };
 

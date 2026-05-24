@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, CheckCircle, Star, MapPin, Briefcase, Plus, Trash2, Image, Sparkles, Globe } from 'lucide-react';
+import { User, CheckCircle, Star, MapPin, Briefcase, Plus, Trash2, Image, Sparkles, Globe, Clock } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { LocationPicker } from './LocationPicker';
 import { isSupabaseConfigured } from '../services/supabaseClient';
@@ -26,9 +26,13 @@ export const ProviderDashboard: React.FC = () => {
   const [lng, setLng] = useState(-99.4735);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [workPhotos, setWorkPhotos] = useState<string[]>([]);
+  
   const [newPhotoUrl, setNewPhotoUrl] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
+
+  // Control de Pestañas Activas en Edición para mayor profesionalismo
+  const [activeTab, setActiveTab] = useState<'info' | 'photos' | 'location'>('info');
 
   // Cargar datos actuales del usuario al iniciar o cambiar
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -60,15 +64,13 @@ export const ProviderDashboard: React.FC = () => {
     setLng(newLng);
   };
 
-  // Agregar una foto a la galería
+  // Agregar una foto a la galería de trabajos
   const handleAddPhoto = (url: string) => {
     if (!url.trim()) return;
-    if (workPhotos.includes(url)) {
-      setNewPhotoUrl('');
-      return; // Evitar duplicados
+    const cleanUrl = url.trim();
+    if (!workPhotos.includes(cleanUrl)) {
+      setWorkPhotos(prev => [...prev, cleanUrl]);
     }
-    const updatedPhotos = [...workPhotos, url];
-    setWorkPhotos(updatedPhotos);
     setNewPhotoUrl('');
   };
 
@@ -341,58 +343,20 @@ export const ProviderDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Input de URL Personalizada */}
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <input
-                    type="url"
-                    placeholder="Pega la URL de una foto de tu trabajo (ej. de internet o redes)..."
-                    className="form-control"
-                    value={newPhotoUrl}
-                    onChange={(e) => setNewPhotoUrl(e.target.value)}
-                    id="upgrade_photo_url_input"
-                  />
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    style={{ padding: '0 1rem', display: 'flex', alignItems: 'center', gap: '0.25rem', whiteSpace: 'nowrap' }}
-                    onClick={() => handleAddPhoto(newPhotoUrl)}
-                  >
-                    <Plus size={16} />
-                    Agregar
-                  </button>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem' }}>
+                  {workPhotos.map((photo, index) => (
+                    <div key={index} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', height: '90px', border: '1px solid var(--bg-dark-card-border)' }}>
+                      <img src={photo} alt="Trabajo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePhoto(index)}
+                        style={{ position: 'absolute', top: '4px', right: '4px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                      >
+                        <Trash2 size={10} />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-
-                {/* Grid de Fotos de Trabajos */}
-                {workPhotos.length > 0 && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '1rem', marginTop: '1.5rem' }}>
-                    {workPhotos.map((photo, index) => (
-                      <div key={index} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', height: '100px', border: '1px solid var(--bg-dark-card-border)' }}>
-                        <img src={photo} alt={`Trabajo ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        <button
-                          type="button"
-                          onClick={() => handleRemovePhoto(index)}
-                          style={{
-                            position: 'absolute',
-                            top: '4px',
-                            right: '4px',
-                            width: '24px',
-                            height: '24px',
-                            borderRadius: '50%',
-                            background: 'rgba(239, 68, 68, 0.85)',
-                            color: 'white',
-                            border: 'none',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
 
             </div>
@@ -445,351 +409,602 @@ export const ProviderDashboard: React.FC = () => {
   }
 
   // 3. Vista de Panel para Proveedores Activos (y Administradores para pruebas)
+  // Rediseñada de forma extremadamente profesional con Pestañas y Vista Previa en Vivo interactiva
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.5rem 1rem' }}>
+    <div style={{ maxWidth: '1250px', margin: '0 auto', padding: '1.5rem 1rem' }}>
       
-      {/* Encabezado */}
-      <div className="panel-header" style={{ marginBottom: '2rem' }}>
+      {/* Encabezado Principal */}
+      <div className="panel-header" style={{ marginBottom: '2.25rem' }}>
         <div>
-          <h2 style={{ fontSize: '1.85rem', color: 'var(--text-dark-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Briefcase size={26} style={{ color: 'var(--primary-light)' }} />
-            Mi Panel de Proveedor
+          <h2 style={{ fontSize: '1.95rem', color: 'var(--text-dark-primary)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <Briefcase size={28} style={{ color: 'var(--primary-light)' }} />
+            Panel de Control de Proveedor
           </h2>
-          <p style={{ color: '#94a3b8', marginTop: '0.25rem' }}>Administra tu perfil público, tarifa por hora, horario de atención, ubicación y galería de fotos de tus trabajos finalizados.</p>
+          <p style={{ color: '#94a3b8', marginTop: '0.35rem', fontSize: '0.95rem' }}>
+            Gestiona la información comercial de tu negocio local, define tus tarifas, agrega fotos reales y mantén tu ubicación de cobertura siempre al día.
+          </p>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '2rem' }} className="d-flex-column-mobile">
+      {/* Banner de Advertencia si está pendiente de aprobación en producción */}
+      {user.isActive === false && (
+        <div className="glass-card" style={{
+          background: 'linear-gradient(90deg, rgba(217, 119, 6, 0.12) 0%, rgba(245, 158, 11, 0.04) 100%)',
+          borderLeft: '4px solid #f59e0b',
+          padding: '1.25rem 1.5rem',
+          borderRadius: '12px',
+          marginBottom: '2rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem'
+        }}>
+          <span style={{ fontSize: '1.5rem' }}>⏳</span>
+          <div>
+            <h4 style={{ color: '#fbbf24', fontSize: '0.95rem', fontWeight: 'bold' }}>Perfil Pendiente de Aprobación por la Administración</h4>
+            <p style={{ color: '#94a3b8', fontSize: '0.82rem', marginTop: '0.15rem' }}>
+              Puedes editar y perfeccionar tu perfil normalmente en este panel. Tus cambios se guardarán, pero tu perfil no se mostrará públicamente en el buscador ni en el mapa hasta que el administrador verifique tus datos.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Grid del Dashboard: Formulario a la Izquierda, Vista Previa en Vivo a la Derecha */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: '2.25rem' }} className="d-flex-column-mobile">
         
-        {/* Columna Izquierda: Formularios */}
+        {/* Columna Izquierda: Formulario Organizado por Pestañas */}
         <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
-          {/* Información General */}
-          <div className="glass-card" style={{ padding: '2rem' }}>
-            <h3 style={{ borderBottom: '1px solid var(--bg-dark-card-border)', paddingBottom: '0.75rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <User size={20} style={{ color: 'var(--primary-light)' }} />
-              Información de Contacto
-            </h3>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-              <div className="form-group">
-                <label>Nombre Profesional</label>
-                <input
-                  type="text"
-                  required
-                  className="form-control"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  id="provider_name"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Teléfono (WhatsApp)</label>
-                <input
-                  type="tel"
-                  required
-                  className="form-control"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  id="provider_phone"
-                />
-              </div>
-            </div>
+          {/* Selector de Pestañas Premium */}
+          <div style={{ 
+            display: 'flex', 
+            background: 'rgba(255, 255, 255, 0.02)', 
+            border: '1px solid var(--bg-dark-card-border)',
+            borderRadius: '12px',
+            padding: '0.4rem',
+            gap: '0.25rem' 
+          }}>
+            <button
+              type="button"
+              onClick={() => setActiveTab('info')}
+              style={{
+                flex: 1,
+                background: activeTab === 'info' ? 'rgba(20, 184, 166, 0.12)' : 'transparent',
+                border: 'none',
+                color: activeTab === 'info' ? 'var(--text-dark-primary)' : '#64748b',
+                padding: '0.75rem 1rem',
+                fontWeight: 'bold',
+                fontSize: '0.88rem',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                transition: 'var(--transition-fast)'
+              }}
+            >
+              <User size={16} style={{ color: activeTab === 'info' ? 'var(--primary-light)' : 'inherit' }} />
+              <span>1. Información</span>
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setActiveTab('photos')}
+              style={{
+                flex: 1,
+                background: activeTab === 'photos' ? 'rgba(20, 184, 166, 0.12)' : 'transparent',
+                border: 'none',
+                color: activeTab === 'photos' ? 'var(--text-dark-primary)' : '#64748b',
+                padding: '0.75rem 1rem',
+                fontWeight: 'bold',
+                fontSize: '0.88rem',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                transition: 'var(--transition-fast)'
+              }}
+            >
+              <Image size={16} style={{ color: activeTab === 'photos' ? 'var(--primary-light)' : 'inherit' }} />
+              <span>2. Galería ({workPhotos.length})</span>
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setActiveTab('location')}
+              style={{
+                flex: 1,
+                background: activeTab === 'location' ? 'rgba(20, 184, 166, 0.12)' : 'transparent',
+                border: 'none',
+                color: activeTab === 'location' ? 'var(--text-dark-primary)' : '#64748b',
+                padding: '0.75rem 1rem',
+                fontWeight: 'bold',
+                fontSize: '0.88rem',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                transition: 'var(--transition-fast)'
+              }}
+            >
+              <MapPin size={16} style={{ color: activeTab === 'location' ? 'var(--primary-light)' : 'inherit' }} />
+              <span>3. Cobertura</span>
+            </button>
           </div>
 
-          {/* Especializaciones y Tarifas */}
-          <div className="glass-card" style={{ padding: '2rem' }}>
-            <h3 style={{ borderBottom: '1px solid var(--bg-dark-card-border)', paddingBottom: '0.75rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Briefcase size={20} style={{ color: 'var(--secondary-color)' }} />
-              Servicios y Tarifas
-            </h3>
+          {/* Renderizado de la Pestaña 1: Información Profesional */}
+          {activeTab === 'info' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              
+              {/* Información General */}
+              <div className="glass-card" style={{ padding: '2rem' }}>
+                <h3 style={{ borderBottom: '1px solid var(--bg-dark-card-border)', paddingBottom: '0.75rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <User size={20} style={{ color: 'var(--primary-light)' }} />
+                  Información Básica de Contacto
+                </h3>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '1.5rem' }}>
-              <div className="form-group">
-                <label>Tarifa Base ($ MXN / Hora)</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="number"
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }} className="d-flex-column-mobile">
+                  <div className="form-group">
+                    <label>Nombre Profesional</label>
+                    <input
+                      type="text"
+                      required
+                      className="form-control"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      id="provider_name"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Teléfono (WhatsApp)</label>
+                    <input
+                      type="tel"
+                      required
+                      className="form-control"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      id="provider_phone"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Oficio y Tarifas */}
+              <div className="glass-card" style={{ padding: '2rem' }}>
+                <h3 style={{ borderBottom: '1px solid var(--bg-dark-card-border)', paddingBottom: '0.75rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Briefcase size={20} style={{ color: 'var(--secondary-color)' }} />
+                  Detalles del Servicio Comercial
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '1.25rem' }} className="d-flex-column-mobile">
+                  <div className="form-group">
+                    <label>Tarifa Base ($ MXN / Hora)</label>
+                    <input
+                      type="number"
+                      required
+                      min={0}
+                      className="form-control"
+                      value={rate}
+                      onChange={(e) => setRate(Number(e.target.value))}
+                      id="provider_rate"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Horarios de Disponibilidad</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ej. Lunes a Sábado: 8:00 AM - 6:00 PM"
+                      className="form-control"
+                      value={schedule}
+                      onChange={(e) => setSchedule(e.target.value)}
+                      id="provider_schedule"
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: '600', fontSize: '0.88rem', color: 'var(--text-dark-primary)' }}>
+                    Categorías de Oficio (Selecciona todas las que apliquen)
+                  </label>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {availableCategories.map((cat) => {
+                      const isChecked = selectedCategories.includes(cat);
+                      return (
+                        <label
+                          key={cat}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            background: isChecked ? 'rgba(20, 184, 166, 0.12)' : 'var(--bg-input, rgba(255, 255, 255, 0.02))',
+                            border: `1px solid ${isChecked ? 'var(--primary-light)' : 'var(--bg-dark-card-border)'}`,
+                            padding: '0.5rem 1rem',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            textTransform: 'capitalize',
+                            fontSize: '0.85rem',
+                            fontWeight: isChecked ? '600' : 'normal',
+                            transition: 'var(--transition-fast)'
+                          }}
+                          id={`label_cat_${cat}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => handleCategoryToggle(cat)}
+                            style={{ display: 'none' }}
+                            id={`check_cat_${cat}`}
+                          />
+                          <span>{cat}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ marginTop: '1.5rem' }}>
+                  <label>Biografía / Presentación al Cliente</label>
+                  <textarea
+                    rows={4}
                     required
-                    min={0}
+                    placeholder="Escribe una presentación atractiva. Cuenta tus años de experiencia, especialidades, herramientas, garantías y la calidad de tu trabajo..."
                     className="form-control"
-                    value={rate}
-                    onChange={(e) => setRate(Number(e.target.value))}
-                    id="provider_rate"
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    id="provider_bio"
                   />
                 </div>
               </div>
 
-              <div className="form-group">
-                <label>Horarios de Disponibilidad</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ej. Lunes a Sábado: 8:00 AM - 6:00 PM"
-                  className="form-control"
-                  value={schedule}
-                  onChange={(e) => setSchedule(e.target.value)}
-                  id="provider_schedule"
-                />
-              </div>
             </div>
+          )}
 
-            <div style={{ marginTop: '1.5rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: '600', fontSize: '0.9rem' }}>Categorías de Oficio</label>
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                {availableCategories.map((cat) => {
-                  const isChecked = selectedCategories.includes(cat);
-                  return (
-                    <label
-                      key={cat}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        background: isChecked ? 'rgba(20, 184, 166, 0.15)' : 'var(--bg-input, rgba(255, 255, 255, 0.02))',
-                        border: `1px solid ${isChecked ? 'var(--primary-light)' : 'var(--bg-dark-card-border)'}`,
-                        padding: '0.5rem 1rem',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        textTransform: 'capitalize',
-                        transition: 'var(--transition-fast)'
-                      }}
-                      id={`label_cat_${cat}`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => handleCategoryToggle(cat)}
-                        style={{ display: 'none' }}
-                        id={`check_cat_${cat}`}
-                      />
-                      <span>{cat}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
+          {/* Renderizado de la Pestaña 2: Galería de Proyectos */}
+          {activeTab === 'photos' && (
+            <div className="glass-card" style={{ padding: '2rem' }}>
+              <h3 style={{ borderBottom: '1px solid var(--bg-dark-card-border)', paddingBottom: '0.75rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Image size={20} style={{ color: 'var(--primary-light)' }} />
+                Galería de Trabajos Realizados
+              </h3>
+              
+              <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '1.25rem', lineHeight: '1.5' }}>
+                Las fotos reales incrementan la confianza de los clientes. Puedes añadir imágenes demostrativas con los presets de abajo o pegar enlaces de tus propios trabajos.
+              </p>
 
-            <div className="form-group" style={{ marginTop: '1.5rem' }}>
-              <label>Descripción / Experiencia Laboral</label>
-              <textarea
-                rows={4}
-                required
-                placeholder="Escribe una breve introducción sobre tu experiencia laboral, especialidades, herramientas y garantías..."
-                className="form-control"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                id="provider_bio"
-              />
-            </div>
-          </div>
-
-          {/* Galería de Fotos del Proveedor */}
-          <div className="glass-card" style={{ padding: '2rem' }}>
-            <h3 style={{ borderBottom: '1px solid var(--bg-dark-card-border)', paddingBottom: '0.75rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Image size={20} style={{ color: 'var(--primary-light)' }} />
-              Fotos de tus Trabajos y Proyectos
-            </h3>
-            
-            <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '1.25rem', lineHeight: '1.5' }}>
-              Muestra imágenes reales de tus trabajos anteriores para dar mayor confianza a tus clientes. Puedes subir tus propias fotos o agregar imágenes demostrativas con los presets de abajo.
-            </p>
-
-            {/* Presets Rápidos */}
-            <div style={{ marginBottom: '1.25rem' }}>
-              <span style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                ⚡ Agregar presets de prueba rápida en 1 clic:
-              </span>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                {PHOTO_PRESETS.map((preset) => (
-                  <button
-                    key={preset.label}
-                    type="button"
-                    className="btn-secondary"
-                    style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-                    onClick={() => handleAddPhoto(preset.url)}
-                  >
-                    <Plus size={12} />
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Input URL Manual */}
-            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
-              <input
-                type="url"
-                placeholder="Pega la URL de una foto de tus trabajos terminados..."
-                className="form-control"
-                value={newPhotoUrl}
-                onChange={(e) => setNewPhotoUrl(e.target.value)}
-                id="provider_photo_url_input"
-              />
-              <button
-                type="button"
-                className="btn-secondary"
-                style={{ padding: '0 1.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem', whiteSpace: 'nowrap' }}
-                onClick={() => handleAddPhoto(newPhotoUrl)}
-              >
-                <Plus size={16} />
-                Agregar Foto
-              </button>
-            </div>
-
-            {/* Visualización Grid con Hover y Borrado */}
-            {workPhotos.length === 0 ? (
-              <div style={{ border: '2px dashed var(--bg-dark-card-border)', borderRadius: '12px', padding: '2rem 1rem', textAlign: 'center', color: '#94a3b8' }}>
-                <Image size={32} style={{ margin: '0 auto 0.5rem auto', opacity: 0.5 }} />
-                <span style={{ fontSize: '0.85rem' }}>Aún no has agregado fotos de tus trabajos. ¡Usa los presets de arriba para empezar!</span>
-              </div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem' }}>
-                {workPhotos.map((photo, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      position: 'relative',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      height: '110px',
-                      border: '1px solid var(--bg-dark-card-border)',
-                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-                    }}
-                    className="work-photo-item-container"
-                  >
-                    <img
-                      src={photo}
-                      alt={`Trabajo ${index + 1}`}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        transition: 'transform 0.3s ease'
-                      }}
-                      className="work-photo-img"
-                    />
+              {/* Presets Rápidos */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <span style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                  ⚡ Carga rápida en 1 clic de presets profesionales:
+                </span>
+                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                  {PHOTO_PRESETS.map((preset) => (
                     <button
+                      key={preset.label}
                       type="button"
-                      onClick={() => handleRemovePhoto(index)}
-                      style={{
-                        position: 'absolute',
-                        top: '6px',
-                        right: '6px',
-                        width: '26px',
-                        height: '26px',
-                        borderRadius: '50%',
-                        background: 'rgba(239, 68, 68, 0.95)',
-                        color: 'white',
-                        border: 'none',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-                        zIndex: 5
-                      }}
-                      title="Eliminar esta foto"
+                      className="btn-secondary"
+                      style={{ padding: '0.35rem 0.65rem', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
+                      onClick={() => handleAddPhoto(preset.url)}
                     >
-                      <Trash2 size={12} />
+                      <Plus size={10} />
+                      {preset.label}
                     </button>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            )}
-          </div>
 
-          {/* Geolocalización (Maps) */}
-          <div className="glass-card" style={{ padding: '2rem' }}>
-            <h3 style={{ borderBottom: '1px solid var(--bg-dark-card-border)', paddingBottom: '0.75rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <MapPin size={20} style={{ color: '#ef4444' }} />
-              Ubicación Geográfica en Jalpan
-            </h3>
+              {/* Input URL Manual */}
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                <input
+                  type="url"
+                  placeholder="Pega la URL de una foto (ej: https://enlace-imagen.jpg)..."
+                  className="form-control"
+                  value={newPhotoUrl}
+                  onChange={(e) => setNewPhotoUrl(e.target.value)}
+                  id="provider_photo_url_input"
+                  style={{ fontSize: '0.85rem' }}
+                />
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  style={{ padding: '0 1rem', display: 'flex', alignItems: 'center', gap: '0.25rem', whiteSpace: 'nowrap', fontSize: '0.85rem' }}
+                  onClick={() => handleAddPhoto(newPhotoUrl)}
+                >
+                  <Plus size={14} />
+                  Añadir Foto
+                </button>
+              </div>
 
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.25rem', fontSize: '0.85rem', color: '#94a3b8' }}>
-              <div>
-                <strong>Latitud:</strong> {lat.toFixed(6)}
-              </div>
-              <div>
-                <strong>Longitud:</strong> {lng.toFixed(6)}
-              </div>
+              {/* Grid de Fotos Agregadas */}
+              {workPhotos.length === 0 ? (
+                <div style={{ border: '2px dashed var(--bg-dark-card-border)', borderRadius: '12px', padding: '3rem 1.5rem', textAlign: 'center', color: '#94a3b8' }}>
+                  <Image size={36} style={{ margin: '0 auto 0.75rem auto', opacity: 0.4 }} />
+                  <span style={{ fontSize: '0.85rem', display: 'block' }}>¡Tu galería de trabajos está vacía!</span>
+                  <span style={{ fontSize: '0.75rem', opacity: 0.75, display: 'block', marginTop: '0.25rem' }}>Usa los presets rápidos de arriba para comenzar a probarla al instante.</span>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.75rem' }}>
+                  {workPhotos.map((photo, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        position: 'relative',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        height: '95px',
+                        border: '1px solid var(--bg-dark-card-border)',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.15)'
+                      }}
+                      className="work-photo-item-container"
+                    >
+                      <img
+                        src={photo}
+                        alt={`Trabajo ${index + 1}`}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePhoto(index)}
+                        style={{
+                          position: 'absolute',
+                          top: '4px',
+                          right: '4px',
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          background: 'rgba(239, 68, 68, 0.95)',
+                          color: 'white',
+                          border: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                          zIndex: 5
+                        }}
+                        title="Eliminar esta foto"
+                      >
+                        <Trash2 size={10} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
+          )}
 
-            <LocationPicker
-              initialLat={lat}
-              initialLng={lng}
-              onLocationChange={handleLocationUpdate}
-            />
-          </div>
+          {/* Renderizado de la Pestaña 3: Área de Cobertura */}
+          {activeTab === 'location' && (
+            <div className="glass-card" style={{ padding: '2rem' }}>
+              <h3 style={{ borderBottom: '1px solid var(--bg-dark-card-border)', paddingBottom: '0.75rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <MapPin size={20} style={{ color: '#ef4444' }} />
+                Cobertura y Geolocalización en Jalpan
+              </h3>
 
-          {/* Botón de Guardado */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <button type="submit" className="btn-primary" style={{ padding: '0.85rem 2.5rem', fontSize: '1.05rem', fontWeight: 'bold' }} id="btn_save_provider_profile">
+              <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '1.25rem', lineHeight: '1.5' }}>
+                Los clientes de Jalpan te buscarán en base a tu cercanía. Pega un enlace de Google Maps del pueblo o arrastra el marcador verde para posicionarte en tu colonia o comunidad.
+              </p>
+
+              <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.25rem', fontSize: '0.85rem', color: '#94a3b8', background: 'rgba(255,255,255,0.01)', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--bg-dark-card-border)' }}>
+                <div>
+                  <strong>Latitud:</strong> <span style={{ color: 'var(--text-dark-primary)' }}>{lat.toFixed(6)}</span>
+                </div>
+                <div>
+                  <strong>Longitud:</strong> <span style={{ color: 'var(--text-dark-primary)' }}>{lng.toFixed(6)}</span>
+                </div>
+              </div>
+
+              <LocationPicker
+                initialLat={lat}
+                initialLng={lng}
+                onLocationChange={handleLocationUpdate}
+              />
+            </div>
+          )}
+
+          {/* Botón de Guardado Unificado (Visible bajo los formularios en cualquier pestaña) */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '1.5rem', 
+            marginTop: '1rem', 
+            borderTop: '1px solid var(--bg-dark-card-border)', 
+            paddingTop: '1.5rem' 
+          }}>
+            <button 
+              type="submit" 
+              className="btn-primary" 
+              style={{ 
+                padding: '0.85rem 2.5rem', 
+                fontSize: '1.02rem', 
+                fontWeight: 'bold',
+                boxShadow: '0 4px 14px rgba(20, 184, 166, 0.35)'
+              }} 
+              id="btn_save_provider_profile"
+            >
               Guardar Cambios de Perfil
             </button>
 
             {saveSuccess && (
-              <span style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 'bold' }}>
+              <span style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 'bold', fontSize: '0.9rem' }}>
                 <CheckCircle size={18} />
-                ¡Cambios Guardados Exitosamente!
+                ¡Perfil Actualizado con Éxito!
               </span>
             )}
           </div>
+
         </form>
 
-        {/* Columna Derecha: Estadísticas y Guía */}
+        {/* Columna Derecha: Tarjeta Interactiva de VISTA PREVIA EN VIVO */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
-          {/* Card Resumen de Perfil */}
-          <div className="glass-card" style={{ padding: '2rem', textAlign: 'center' }}>
-            <div style={{ background: 'var(--bg-role-switcher, rgba(255, 255, 255, 0.05))', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem auto', fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary-light)', border: '1px solid var(--bg-dark-card-border)' }}>
-              {name.charAt(0) || 'P'}
-            </div>
+          {/* Indicador de Vista Previa */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.5rem', 
+            color: '#14b8a6', 
+            background: 'rgba(20, 184, 166, 0.05)', 
+            padding: '0.75rem 1rem', 
+            borderRadius: '12px', 
+            border: '1px dashed rgba(20, 184, 166, 0.25)' 
+          }}>
+            <Sparkles size={16} className="pulse-icon" />
+            <span style={{ fontSize: '0.78rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Vista Previa en Vivo del Perfil
+            </span>
+          </div>
+
+          {/* Tarjeta de Proveedor: Copia fiel de cómo se ve en el buscador principal */}
+          <div className="glass-card provider-card" style={{ 
+            boxShadow: '0 15px 30px rgba(0, 0, 0, 0.45)', 
+            border: '1px solid rgba(20, 184, 166, 0.2)',
+            transform: 'translateY(0)',
+            transition: 'transform 0.3s ease'
+          }}>
             
-            <h3 style={{ fontSize: '1.25rem', color: 'var(--text-dark-primary)' }}>{name}</h3>
-            <p style={{ color: '#94a3b8', fontSize: '0.85rem', textTransform: 'capitalize', marginTop: '0.25rem', display: 'flex', flexWrap: 'wrap', gap: '0.35rem', justifyContent: 'center' }}>
-              {selectedCategories.length > 0 ? (
-                selectedCategories.map((c) => (
-                  <span key={c} className="badge badge-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.7rem' }}>
-                    {c}
-                  </span>
-                ))
-              ) : (
-                <span style={{ color: '#ef4444' }}>Sin categorías asignadas</span>
-              )}
+            <div className="provider-card-header">
+              <div className="provider-info-block" style={{ width: '100%' }}>
+                
+                {/* Nombre */}
+                <h3 style={{ 
+                  fontSize: '1.25rem', 
+                  fontWeight: 'bold', 
+                  color: 'var(--text-dark-primary)', 
+                  margin: 0,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {name.trim() || 'Tu Nombre Profesional'}
+                </h3>
+                
+                {/* Categorías */}
+                <div className="provider-badge-list" style={{ marginTop: '0.5rem', display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                  {selectedCategories.length > 0 ? (
+                    selectedCategories.map((cat) => (
+                      <span key={cat} className="badge badge-primary" style={{ textTransform: 'capitalize', fontSize: '0.68rem', padding: '0.2rem 0.5rem' }}>
+                        {cat}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#f87171', fontSize: '0.68rem' }}>
+                      Sin especialidad
+                    </span>
+                  )}
+                </div>
+                
+                {/* Calificación y Distancia Simulada */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.75rem' }}>
+                  <div className="rating-stars" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <Star size={13} fill="currentColor" style={{ color: '#fbbf24' }} />
+                    <strong style={{ fontSize: '0.82rem', color: '#fbbf24' }}>{user.rating || 5.0}</strong>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>({user.reviewsCount || 0})</span>
+                  </div>
+                  
+                  <div className="provider-distance" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.78rem', color: '#94a3b8' }}>
+                    <MapPin size={12} />
+                    <span>A 1.25 km</span>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Tarifa Base */}
+              <div className="provider-rate" style={{ fontSize: '1.25rem', minWidth: '85px', textAlign: 'right' }}>
+                ${rate || 0}<span style={{ fontSize: '0.75rem' }}>/hr</span>
+              </div>
+            </div>
+
+            {/* Presentación / Biografía */}
+            <p style={{ 
+              color: '#94a3b8', 
+              fontSize: '0.83rem', 
+              lineHeight: '1.5', 
+              margin: '0.75rem 0', 
+              minHeight: '45px', 
+              wordBreak: 'break-word',
+              display: '-webkit-box',
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden'
+            }}>
+              {bio.trim() || 'Escribe una presentación atractiva en la pestaña 1 para que los clientes del pueblo te conozcan de inmediato...'}
             </p>
 
-            <div style={{ display: 'flex', justifyContent: 'space-around', borderTop: '1px solid var(--bg-dark-card-border)', marginTop: '1.5rem', paddingTop: '1.5rem' }}>
-              <div>
-                <div style={{ color: 'var(--secondary-color)', display: 'flex', alignItems: 'center', gap: '0.25rem', justifyContent: 'center' }}>
-                  <Star size={18} fill="currentColor" />
-                  <strong style={{ fontSize: '1.25rem' }}>{user.rating || 5.0}</strong>
-                </div>
-                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Calificación</span>
+            {/* Footer de la tarjeta */}
+            <div className="provider-card-footer" style={{ 
+              borderTop: '1px solid var(--bg-dark-card-border)', 
+              paddingTop: '0.75rem', 
+              marginTop: '0.75rem', 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center' 
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#64748b' }}>
+                <Clock size={12} />
+                <span>{schedule.trim() || 'Horario por definir'}</span>
               </div>
+              
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ padding: '0.4rem 0.85rem', fontSize: '0.78rem', pointerEvents: 'none' }}
+              >
+                Ver Perfil
+              </button>
+            </div>
+            
+          </div>
 
-              <div>
-                <strong style={{ fontSize: '1.25rem', color: 'var(--text-dark-primary)', display: 'block' }}>{user.reviewsCount || 0}</strong>
-                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Opiniones</span>
+          {/* Carrusel de Fotos de la Vista Previa */}
+          {workPhotos.length > 0 && (
+            <div className="glass-card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#94a3b8', display: 'block' }}>
+                🖼️ Fotos de tus Trabajos en tu Perfil ({workPhotos.length})
+              </span>
+              <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+                {workPhotos.map((photo, index) => (
+                  <img
+                    key={index}
+                    src={photo}
+                    alt={`Proyecto ${index + 1}`}
+                    style={{ 
+                      width: '75px', 
+                      height: '55px', 
+                      borderRadius: '4px', 
+                      objectFit: 'cover',
+                      border: '1px solid var(--bg-dark-card-border)' 
+                    }}
+                  />
+                ))}
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Tips e Instrucciones */}
-          <div className="glass-card" style={{ padding: '1.5rem 2rem' }}>
-            <h4 style={{ fontSize: '0.95rem', color: 'var(--text-dark-primary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <Sparkles size={16} style={{ color: 'var(--primary-light)' }} />
-              ¿Cómo optimizar tu perfil?
+          {/* Tips Adicionales de Éxito */}
+          <div className="glass-card" style={{ padding: '1.5rem' }}>
+            <h4 style={{ fontSize: '0.9rem', color: 'var(--text-dark-primary)', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.5rem' }}>
+              <Sparkles size={14} style={{ color: 'var(--primary-light)' }} />
+              Consejos de Éxito Local
             </h4>
-            <ul style={{ color: '#94a3b8', fontSize: '0.85rem', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', lineHeight: '1.5' }}>
-              <li>Mantén tu <strong>número telefónico</strong> activo para recibir llamadas y cotizaciones directas de WhatsApp.</li>
-              <li>Ajusta tu <strong>tarifa base por hora</strong> de acuerdo al mercado para recibir más solicitudes.</li>
-              <li>Describe detalladamente tus <strong>herramientas, servicios y garantías</strong> en la biografía.</li>
-              <li>Arrastra el marcador en el mapa para situar tu punto con precisión.</li>
-              <li>Sube fotos reales de tus trabajos para destacar frente a otros competidores.</li>
+            <ul style={{ color: '#94a3b8', fontSize: '0.78rem', paddingLeft: '1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', lineHeight: '1.4' }}>
+              <li><strong>Tarifa competitiva:</strong> Configura una tarifa justa de acuerdo al servicio.</li>
+              <li><strong>Número de WhatsApp:</strong> Asegúrate de que el número sea correcto para recibir cotizaciones instantáneas.</li>
+              <li><strong>Fotos de calidad:</strong> Sube fotos de alta definición para destacar entre los demás prestadores.</li>
             </ul>
           </div>
+
         </div>
 
       </div>
