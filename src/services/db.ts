@@ -453,15 +453,39 @@ export const db = {
   async saveProfile(profile: Partial<Profile> & { id: string }): Promise<Profile> {
     if (isSupabaseConfigured && supabase) {
       try {
+        const dbProfile = mapProfileToDb(profile);
+        // Extraemos 'id' para evitar enviarlo en el cuerpo del UPDATE (ya que es la clave primaria e inmutable)
+        // y prevenir cualquier restricción de mutabilidad o de políticas RLS.
+        const { id, ...updateData } = dbProfile;
+
+        // Primero intentamos una operación de UPDATE directa, que es más segura bajo políticas RLS restrictivas
+        // y previene problemas con columnas not-null en actualizaciones parciales.
         const { data, error } = await withTimeout(supabase
           .from('profiles')
-          .upsert(mapProfileToDb(profile))
+          .update(updateData)
+          .eq('id', profile.id)
           .select()
           .single(), 2500);
-        if (!error && data) return mapProfileFromDb(data);
-        throw error;
+        
+        if (!error && data) {
+          return mapProfileFromDb(data);
+        }
+
+        // Si falló (ej. el perfil no existía), intentamos UPSERT como fallback de respaldo (aquí sí enviamos el id)
+        console.warn('Update de perfil no retornó datos o dio error, intentando upsert de respaldo:', error);
+        const { data: upsertData, error: upsertError } = await withTimeout(supabase
+          .from('profiles')
+          .upsert(dbProfile)
+          .select()
+          .single(), 2500);
+
+        if (!upsertError && upsertData) {
+          return mapProfileFromDb(upsertData);
+        }
+        
+        throw upsertError || error || new Error('No se pudo guardar el perfil en Supabase');
       } catch (err) {
-        console.error('Supabase error al guardar perfil, usando localStorage:', err);
+        console.error('Supabase error al guardar perfil, usando localStorage como respaldo:', err);
       }
     }
 
@@ -488,7 +512,10 @@ export const db = {
         lng: profile.lng ?? -99.4735,
         rating: profile.rating || 5.0,
         reviewsCount: profile.reviewsCount || 0,
-        workPhotos: profile.workPhotos || []
+        isActive: profile.isActive ?? true,
+        email: profile.email || '',
+        workPhotos: profile.workPhotos || [],
+        suspensionReason: profile.suspensionReason || ''
       };
       profiles.push(updatedProfile);
     }

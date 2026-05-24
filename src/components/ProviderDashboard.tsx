@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, CheckCircle, Star, MapPin, Briefcase, Plus, Trash2, Image, Sparkles, Globe } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { LocationPicker } from './LocationPicker';
+import { isSupabaseConfigured } from '../services/supabaseClient';
 
 const PHOTO_PRESETS = [
   { label: '🔧 Plomería', url: 'https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=600&auto=format&fit=crop&q=60' },
@@ -116,7 +117,7 @@ export const ProviderDashboard: React.FC = () => {
         categories: selectedCategories.length > 0 ? selectedCategories : ['plomería'],
         workPhotos: workPhotos,
         role: 'prestador', // Cambiar de cliente a proveedor
-        isActive: false // Requiere nueva autorización del administrador
+        isActive: isSupabaseConfigured ? false : true // En Supabase requiere aprobación del admin, en local/demo se activa automáticamente para facilitar pruebas
       });
       
       setSaveSuccess(true);

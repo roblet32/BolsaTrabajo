@@ -117,7 +117,7 @@ const MainAppContent: React.FC = () => {
         return (
           <div className="dashboard-layout" style={{ flex: 1 }}>
             {/* Mapa Izquierdo */}
-            <div className={`map-wrapper ${searchViewMode === 'map' ? 'mobile-show' : 'mobile-hide'}`} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div className="map-wrapper" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
               <ServiceMap
                 filteredProfiles={filteredProfiles}
                 onSelectProfile={setSelectedDetailProfile}
@@ -125,7 +125,7 @@ const MainAppContent: React.FC = () => {
             </div>
 
             {/* Listado y Filtros Derechos */}
-            <div className={`providers-panel ${searchViewMode === 'list' ? 'mobile-show' : 'mobile-hide'}`}>
+            <div className="providers-panel">
               <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <h3 style={{ fontSize: '1.1rem', color: 'var(--text-dark-primary)' }}>Filtros de Búsqueda</h3>
                 
@@ -241,22 +241,6 @@ const MainAppContent: React.FC = () => {
                   );
                 })
               )}
-            </div>
-
-            {/* Alternador de vista móvil */}
-            <div className="mobile-view-toggle">
-              <button
-                className={`toggle-btn ${searchViewMode === 'list' ? 'active' : ''}`}
-                onClick={() => setSearchViewMode('list')}
-              >
-                Lista
-              </button>
-              <button
-                className={`toggle-btn ${searchViewMode === 'map' ? 'active' : ''}`}
-                onClick={() => setSearchViewMode('map')}
-              >
-                Mapa
-              </button>
             </div>
           </div>
         );

@@ -1235,21 +1235,15 @@ body.theme-light .admin-tab-btn:hover {
    ========================================================================== */
 
 @media (max-width: 768px) {
-  .mobile-hide {
-    display: none !important;
-  }
-  .mobile-show {
-    display: flex !important;
-    flex-direction: column !important;
-  }
-  /* Ajustar paneles de proveedores y mapas en móvil */
+  /* Ajustar paneles de proveedores y mapas en móvil para mostrar ambos de forma apilada */
   .providers-panel {
     max-height: none !important;
     overflow-y: visible !important;
+    padding-right: 0 !important;
   }
   .map-panel {
-    height: calc(100vh - 280px) !important;
-    min-height: 400px !important;
+    height: 380px !important;
+    min-height: 300px !important;
   }
 }
 
