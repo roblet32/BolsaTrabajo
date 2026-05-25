@@ -1785,3 +1785,94 @@ body.theme-light .mail-simulator-actions {
   transform: translateY(-6px) scale(1.02) !important;
 }
 
+
+/* ==========================================================================
+   Responsividad Ultra-Premium para Cabecera y Sección Hero en Celulares
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Cabecera y Menú en Rejilla Responsiva de Dos Filas */
+  .app-header {
+    display: grid !important;
+    grid-template-areas: 
+      "brand controls"
+      "menu menu" !important;
+    grid-template-columns: auto 1fr !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    padding: 0.75rem 1rem !important;
+  }
+  
+  .app-header > .brand {
+    grid-area: brand !important;
+  }
+  
+  /* El último contenedor de controles a la derecha de la cabecera (ingresar/perfil) */
+  .app-header > div:last-child {
+    grid-area: controls !important;
+    justify-self: end !important;
+  }
+  
+  /* Menú de Navegación con Scroll Horizontal Suave */
+  .nav-menu {
+    grid-area: menu !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    display: flex !important;
+    gap: 0.35rem !important;
+    padding: 0.25rem 0 0.5rem 0 !important;
+    scrollbar-width: none !important; /* Ocultar barra en Firefox */
+    -webkit-overflow-scrolling: touch !important; /* Desplazamiento inercial suave en iOS */
+  }
+  
+  .nav-menu::-webkit-scrollbar {
+    display: none !important; /* Ocultar barra en Safari y Chrome */
+  }
+  
+  .nav-item {
+    flex: 0 0 auto !important;
+    padding: 0.4rem 0.65rem !important;
+    font-size: 0.85rem !important;
+    gap: 0.35rem !important;
+  }
+  
+  .nav-item span {
+    display: inline !important; /* Muestra el texto de las pestañas en el scroll */
+  }
+  
+  .brand-name {
+    font-size: 1.25rem !important;
+  }
+  
+  .brand-logo {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  
+  /* Sección Hero y Títulos Adaptativos en Teléfono */
+  .hero-section-container {
+    margin: 1.5rem auto 2.5rem auto !important;
+    padding: 0 1rem !important;
+  }
+  
+  .hero-title-responsive {
+    font-size: 2.1rem !important;
+    line-height: 1.22 !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .hero-banner-card {
+    height: 220px !important;
+    border-radius: 20px !important;
+  }
+  
+  .hero-banner-card span:first-of-type {
+    font-size: 1.2rem !important;
+  }
+  
+  .hero-banner-card span:last-of-type {
+    font-size: 0.75rem !important;
+    margin-top: 0.25rem !important;
+  }
+}
+
+

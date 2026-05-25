@@ -25,7 +25,7 @@ export const LandingPage: React.FC = () => {
         flexDirection: 'column',
         alignItems: 'center',
         textAlign: 'center'
-      }}>
+      }} className="hero-section-container">
         
         {/* Badge de Bienvenida - Centrado */}
         <div style={{
