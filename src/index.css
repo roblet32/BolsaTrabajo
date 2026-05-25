@@ -1875,4 +1875,16 @@ body.theme-light .mail-simulator-actions {
   }
 }
 
+/* ==========================================================================
+   Salvaguarda Global de Contraste y Legibilidad para Textos Secundarios
+   ========================================================================== */
+/* Reemplaza dinámicamente cualquier color gris claro (#94a3b8) en estilos inline
+   por el color adaptativo var(--text-muted) para garantizar contraste en ambos temas */
+[style*="color: #94a3b8"],
+[style*="color:#94a3b8"],
+[style*="color: rgb(148, 163, 184)"],
+[style*="color:rgb(148, 163, 184)"] {
+  color: var(--text-muted) !important;
+}
+
 

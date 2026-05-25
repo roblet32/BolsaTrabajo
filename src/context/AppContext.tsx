@@ -228,10 +228,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             localStorage.setItem('b_current_user', JSON.stringify(tempProfile));
           }
         } else {
-          setUser(null);
-          // Rol cliente por defecto para invitados
-          setRole('cliente');
-          localStorage.removeItem('b_current_user');
+          // Solo borrar la sesión local si es un evento explícito de cierre de sesión (SIGNED_OUT)
+          if (event === 'SIGNED_OUT') {
+            setUser(null);
+            setRole('cliente');
+            localStorage.removeItem('b_current_user');
+            localStorage.removeItem('b_is_super_admin');
+          } else {
+            // En caso de inicialización fallida por red/timeout o base de datos pausada (INITIAL_SESSION con session = null),
+            // intentar restaurar el usuario guardado localmente de forma resiliente en lugar de sacarlo.
+            const savedUser = localStorage.getItem('b_current_user');
+            if (savedUser) {
+              const parsed = JSON.parse(savedUser) as Profile;
+              if (parsed.email?.toLowerCase() === 'josemanuelvillaguillon@gmail.com' || parsed.role === 'admin' || parsed.id === 'a1' || parsed.id === 'admin_jose') {
+                parsed.role = 'admin';
+                localStorage.setItem('b_is_super_admin', 'true');
+              }
+              setUser(parsed);
+              setRole(parsed.role);
+              if (parsed.role === 'cliente') {
+                setClientLocation({ lat: parsed.lat, lng: parsed.lng });
+              }
+            } else {
+              setUser(null);
+              setRole('cliente');
+            }
+          }
         }
         setIsAuthLoading(false);
       });
