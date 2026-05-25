@@ -55,6 +55,10 @@
   --bg-chat-bubble-bot: rgba(18, 24, 38, 0.9);
   --text-chat-bubble-bot: #f1f5f9;
   --bg-leaflet-container: #0a0d16;
+
+  /* Colores Dinámicos de Textos */
+  --text-hero-gradient: linear-gradient(135deg, #ffffff 40%, #a5f3fc 100%);
+  --text-muted: #94a3b8;
 }
 
 /* Modo Claro / Light Theme Overrides Premium */
@@ -90,6 +94,10 @@ body.theme-light {
   --shadow-md: 0 10px 30px rgba(15, 23, 42, 0.06);
   --shadow-lg: 0 20px 50px rgba(15, 23, 42, 0.08);
   --shadow-emerald: 0 8px 24px rgba(85, 81, 255, 0.08);
+
+  /* Colores Dinámicos de Textos en Modo Claro */
+  --text-hero-gradient: linear-gradient(135deg, #0f172a 35%, #3b37d3 100%);
+  --text-muted: #475569;
 }
 
 /* Transición global para cambios de tema fluidos */
