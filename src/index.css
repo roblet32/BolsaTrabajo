@@ -1887,4 +1887,20 @@ body.theme-light .mail-simulator-actions {
   color: var(--text-muted) !important;
 }
 
+/* ==========================================================================
+   Utilidades de Visibilidad Responsiva (Estilo Bootstrap)
+   ========================================================================== */
+.d-none {
+  display: none !important;
+}
+
+@media (min-width: 768px) {
+  .d-md-block {
+    display: block !important;
+  }
+  .d-md-inline {
+    display: inline !important;
+  }
+}
+
 

@@ -35,10 +35,56 @@ export const AuthView: React.FC<{ onAuthSuccess?: () => void }> = ({ onAuthSucce
           setCurrentView('inicio');
         }, 150);
       } else {
-        if (!name.trim()) throw new Error('El nombre es obligatorio.');
+        // 1. Validar Nombre Completo (debe tener al menos un nombre y un apellido)
+        const nameTrimmed = name.trim();
+        if (!nameTrimmed) throw new Error('El nombre completo es obligatorio.');
+        
+        const nameParts = nameTrimmed.split(/\s+/);
+        if (nameParts.length < 2) {
+          throw new Error('Por favor, ingresa tu nombre completo (Nombre y al menos un Apellido) con datos reales.');
+        }
+        
+        const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+        if (!nameRegex.test(nameTrimmed)) {
+          throw new Error('El nombre completo solo debe contener letras y espacios.');
+        }
+
+        // 2. Validar Correo Electrónico
+        const emailTrimmed = email.trim().toLowerCase();
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(emailTrimmed)) {
+          throw new Error('Por favor, ingresa un correo electrónico válido (ejemplo@dominio.com).');
+        }
+        
+        // Bloquear correos dummy o temporales obvios
+        const blockedDomains = ['test.com', 'example.com', 'mock.com', 'correo.com', 'temp.com', 'mailinator.com'];
+        const domain = emailTrimmed.split('@')[1];
+        if (blockedDomains.includes(domain)) {
+          throw new Error('Por favor, utiliza un proveedor de correo electrónico real y válido (Gmail, Outlook, Yahoo, etc.).');
+        }
+
+        // 3. Validar Teléfono (Celular de 10 dígitos)
+        const phoneTrimmed = phone.trim();
+        if (!phoneTrimmed) {
+          throw new Error('El número telefónico es obligatorio para poder contactarte.');
+        }
+        
+        const phoneRegex = /^\d{10}$/;
+        if (!phoneRegex.test(phoneTrimmed)) {
+          throw new Error('El número telefónico debe tener exactamente 10 dígitos (ej: 4411059988).');
+        }
+
+        // Bloquear números repetidos o secuenciales falsos
+        const repetitivePattern = /^(\d)\1{9}$/; // ej: 1111111111, 0000000000
+        const sequentialPattern = /^(0123456789|1234567890|9876543210)$/;
+        if (repetitivePattern.test(phoneTrimmed) || sequentialPattern.test(phoneTrimmed)) {
+          throw new Error('Por favor, ingresa un número telefónico real de 10 dígitos.');
+        }
+
+        // 4. Validar contraseña
         if (password.length < 6) throw new Error('La contraseña debe tener al menos 6 caracteres.');
         
-        await signUp(email, password, name, role, phone);
+        await signUp(emailTrimmed, password, nameTrimmed, role, phoneTrimmed);
         setSuccess(true);
         setIsLogin(true);
         setError('');
@@ -168,7 +214,9 @@ export const AuthView: React.FC<{ onAuthSuccess?: () => void }> = ({ onAuthSucce
                   placeholder="Ej. 4411059988"
                   className="search-field"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                  maxLength={10}
+                  required
                 />
               </div>
             </div>

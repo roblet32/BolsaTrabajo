@@ -386,7 +386,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Guardar cambios en el perfil del usuario actual
   const updateUserProfile = async (updated: Partial<Profile>) => {
     if (!user) return;
-    const newProfile = await db.saveProfile({ ...user, ...updated } as Profile);
+    
+    // Obtener la versión de base de datos más fresca para no pisar el estado 'isActive'
+    // si el administrador lo acaba de activar pero el navegador local no se ha refrescado.
+    let currentActiveState = user.isActive;
+    try {
+      const freshProfile = await db.getProfileById(user.id);
+      if (freshProfile) {
+        currentActiveState = freshProfile.isActive;
+      }
+    } catch (err) {
+      console.error('Error al re-validar isActive en db:', err);
+    }
+
+    const finalUpdate = { ...updated };
+    // Si no se está pasando explícitamente 'isActive' (como ocurre en la conversión de Cliente a Prestador),
+    // forzar que conserve el estado más actual para prevenir auto-suspensiones.
+    if (!('isActive' in updated)) {
+      finalUpdate.isActive = currentActiveState;
+    }
+
+    const newProfile = await db.saveProfile({ ...user, ...finalUpdate } as Profile);
     setUser(newProfile);
     if (updated.role) {
       setRole(updated.role);

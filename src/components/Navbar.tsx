@@ -124,7 +124,7 @@ export const Navbar: React.FC = () => {
         {/* Indicador de Usuario Activo en pantalla grande */}
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ textAlign: 'right', display: 'none' }} className="d-md-block">
+            <div style={{ textAlign: 'right' }} className="d-none d-md-block">
               <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-dark-primary)' }}>{user.name}</div>
               <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
                 {role === 'admin' ? 'Administrador' : role === 'prestador' ? 'Proveedor' : 'Cliente'}
