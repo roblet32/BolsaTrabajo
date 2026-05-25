@@ -17,7 +17,11 @@ export const LandingPage: React.FC = () => {
     : 125;
 
   return (
-    <div style={{ flex: 1, overflowX: 'hidden' }}>
+    <div style={{ flex: 1, overflowX: 'hidden', position: 'relative' }}>
+      
+      {/* Halos y luces de fondo ambientales para diseño de alta gama */}
+      <div className="ambient-halo-1"></div>
+      <div className="ambient-halo-2"></div>
       
       {/* 1. Sección Hero de Entrada - Con Foto de Jalpan y Mensaje de Bienvenida */}
       <section style={{
