@@ -133,6 +133,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ? await db.adminGetAllProfiles() 
       : await db.getProfiles();
     setProfiles(p);
+
+    // Sincronizar el usuario logueado con su versión más fresca en la base de datos de manera resiliente
+    if (user) {
+      try {
+        const freshProfile = await db.getProfileById(user.id);
+        if (freshProfile) {
+          // Verificar cambios estructurales antes de actualizar estado para prevenir loops infinitos
+          if (
+            freshProfile.isActive !== user.isActive ||
+            freshProfile.role !== user.role ||
+            freshProfile.name !== user.name ||
+            freshProfile.phone !== user.phone ||
+            freshProfile.bio !== user.bio ||
+            JSON.stringify(freshProfile.categories) !== JSON.stringify(user.categories) ||
+            freshProfile.rate !== user.rate ||
+            freshProfile.schedule !== user.schedule ||
+            freshProfile.lat !== user.lat ||
+            freshProfile.lng !== user.lng ||
+            JSON.stringify(freshProfile.workPhotos) !== JSON.stringify(user.workPhotos) ||
+            freshProfile.email !== user.email
+          ) {
+            setUser(freshProfile);
+            setRole(freshProfile.role);
+            localStorage.setItem('b_current_user', JSON.stringify(freshProfile));
+          }
+        }
+      } catch (err) {
+        console.error('Error al sincronizar datos de la sesión del usuario:', err);
+      }
+    }
   }
 
   async function refreshAppointments() {
