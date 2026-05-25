@@ -126,9 +126,35 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -0.02em;
 }
+
+/* Normalización de Tipografía Global Premium */
+button, 
+input, 
+select, 
+textarea, 
+option, 
+optgroup {
+  font-family: var(--font-body) !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Botones y elementos interactivos importantes usan la tipografía Outfit */
+button,
+.btn,
+.nav-item,
+.brand-title,
+.tab-btn,
+.role-btn,
+.search-field,
+.filter-select {
+  font-family: var(--font-heading) !important;
+  font-weight: 600;
+}
+
 
 /* Personalización del Scrollbar */
 ::-webkit-scrollbar {

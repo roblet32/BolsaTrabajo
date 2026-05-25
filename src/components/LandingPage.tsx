@@ -22,142 +22,175 @@ export const LandingPage: React.FC = () => {
       {/* Halos y luces de fondo ambientales para diseño de alta gama */}
       <div className="ambient-halo-1"></div>
       <div className="ambient-halo-2"></div>
-      
-      {/* 1. Sección Hero de Entrada - Con Foto de Jalpan y Mensaje de Bienvenida */}
+
+      {/* 1. Sección Hero de Entrada - Rediseño Simétrico Premium */}
       <section style={{
-        maxWidth: '1200px',
-        margin: '2.5rem auto 3rem auto',
+        maxWidth: '1000px',
+        margin: '3.5rem auto 4rem auto',
         padding: '0 2rem',
-        display: 'grid',
-        gridTemplateColumns: '1.2fr 1fr',
-        gap: '3rem',
-        alignItems: 'center'
-      }} className="d-flex-column-mobile">
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center'
+      }}>
         
-        {/* Lado Izquierdo: Foto de Jalpan de Serra con Bordes Redondeados Premium */}
+        {/* Badge de Bienvenida - Centrado */}
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          background: 'rgba(20, 184, 166, 0.08)',
+          border: '1px solid rgba(20, 184, 166, 0.25)',
+          padding: '0.5rem 1.25rem',
+          borderRadius: '9999px',
+          color: 'var(--primary-light)',
+          fontSize: '0.88rem',
+          fontWeight: 'bold',
+          marginBottom: '1.5rem',
+          boxShadow: '0 2px 8px rgba(20, 184, 166, 0.05)'
+        }}>
+          <span>👋 Bienvenidos a tu Bolsa de Trabajo Local</span>
+        </div>
+
+        {/* Título Principal - Centrado y Súper Nítido */}
+        <h1 style={{
+          fontSize: '3.25rem',
+          fontWeight: '850',
+          lineHeight: '1.15',
+          letterSpacing: '-0.02em',
+          color: 'var(--text-dark-primary)',
+          marginBottom: '1.5rem',
+          background: 'linear-gradient(135deg, #ffffff 45%, #a5f3fc 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          maxWidth: '850px'
+        }} className="hero-title-responsive">
+          Encuentra Expertos de Confianza en tu Colonia
+        </h1>
+
+        {/* Subtítulo Descriptivo - Centrado */}
+        <p style={{
+          color: '#94a3b8',
+          fontSize: '1.15rem',
+          lineHeight: '1.7',
+          marginBottom: '2.5rem',
+          maxWidth: '750px'
+        }}>
+          La plataforma comunitaria de la Sierra Gorda que conecta directamente a plomeros, electricistas, carpinteros y más con vecinos del pueblo. ¡Trato local, directo y sin pagar comisiones!
+        </p>
+
+        {/* Botones de Acción - Distribución Simétrica */}
+        <div style={{
+          display: 'flex',
+          gap: '1.25rem',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          width: '100%',
+          maxWidth: '560px',
+          marginBottom: '4rem'
+        }}>
+          <button 
+            className="btn-primary" 
+            onClick={() => { setSearchCategory(''); setCurrentView('mapa'); }}
+            style={{ 
+              fontSize: '1.05rem', 
+              padding: '1rem 2rem',
+              boxShadow: '0 6px 20px rgba(20, 184, 166, 0.3)',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.6rem',
+              borderRadius: '14px',
+              justifyContent: 'center',
+              flex: '1',
+              minWidth: '240px',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+            id="hero_btn_explore"
+          >
+            <Navigation size={18} />
+            <span>Ver Mapa de Profesionales</span>
+          </button>
+          
+          <button 
+            className="btn-secondary" 
+            onClick={() => { setCurrentView('proveedor'); }}
+            style={{ 
+              fontSize: '1.05rem', 
+              padding: '1rem 2rem',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.6rem',
+              borderRadius: '14px',
+              justifyContent: 'center',
+              flex: '1',
+              minWidth: '240px',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+            id="hero_btn_join_as_provider"
+          >
+            <Briefcase size={18} />
+            <span>Ofrecer mis Servicios</span>
+          </button>
+        </div>
+
+        {/* Foto Symmetrical de Jalpan de Serra - Banner Cinematic de Alta Definición */}
         <div style={{
           position: 'relative',
-          borderRadius: '24px',
+          borderRadius: '28px',
           overflow: 'hidden',
           boxShadow: 'var(--shadow-lg)',
           border: '1px solid var(--bg-dark-card-border)',
-          height: '400px',
-          width: '100%'
-        }}>
+          height: '460px',
+          width: '100%',
+          maxWidth: '1000px',
+          transition: 'all 0.4s ease'
+        }} className="hero-banner-card">
           <img 
             src="/jalpan_landscape.png" 
-            alt="Misión Franciscana de Jalpan de Serra" 
+            alt="Misión Franciscana de Jalpan de Serra Querétaro" 
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
-          {/* Overlay de Degradado */}
+          {/* Overlay Degradado Premium para la Imagen */}
           <div style={{
             position: 'absolute',
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'linear-gradient(to top, rgba(11, 15, 25, 0.9) 0%, rgba(11, 15, 25, 0.2) 60%, transparent 100%)',
+            background: 'linear-gradient(to top, rgba(11, 15, 25, 0.95) 0%, rgba(11, 15, 25, 0.1) 60%, transparent 100%)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-end',
-            padding: '1.5rem 2rem'
+            alignItems: 'center',
+            padding: '2.5rem 2rem',
+            textAlign: 'center'
           }}>
-            <span style={{ color: '#ffffff', fontWeight: '800', fontSize: '1.25rem', fontFamily: 'var(--font-heading)', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+            <span style={{ 
+              color: '#ffffff', 
+              fontWeight: '800', 
+              fontSize: '1.75rem', 
+              fontFamily: 'var(--font-heading)', 
+              textShadow: '0 2px 10px rgba(0,0,0,0.85)',
+              letterSpacing: '-0.01em'
+            }}>
               Misión de Santiago de Jalpan
             </span>
-            <span style={{ color: 'var(--primary-light)', fontSize: '0.85rem', fontWeight: '600', marginTop: '0.25rem', textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>
-              Patrimonio de la Humanidad • Sierra Gorda
+            <span style={{ 
+              color: 'var(--primary-light)', 
+              fontSize: '0.95rem', 
+              fontWeight: '700', 
+              marginTop: '0.5rem', 
+              textShadow: '0 1px 4px rgba(0,0,0,0.6)',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase'
+            }}>
+              Patrimonio de la Humanidad • Sierra Gorda Querétaro
             </span>
           </div>
         </div>
 
-        {/* Lado Derecho: Contenido de Bienvenida y Acciones */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left' }}>
-          {/* Badge de Bienvenida */}
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            background: 'rgba(20, 184, 166, 0.08)',
-            border: '1px solid rgba(20, 184, 166, 0.25)',
-            padding: '0.4rem 1rem',
-            borderRadius: '9999px',
-            color: 'var(--primary-light)',
-            fontSize: '0.85rem',
-            fontWeight: 'bold',
-            marginBottom: '1.25rem',
-            boxShadow: '0 2px 8px rgba(20, 184, 166, 0.05)'
-          }}>
-            <span>👋 Bienvenidos a tu Bolsa de Trabajo Local</span>
-          </div>
-
-          <h1 style={{
-            fontSize: '2.75rem',
-            fontWeight: '850',
-            lineHeight: '1.15',
-            letterSpacing: '-0.02em',
-            color: 'var(--text-dark-primary)',
-            marginBottom: '1.25rem',
-            background: 'linear-gradient(135deg, #ffffff 40%, #a5f3fc 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>
-            Encuentra Expertos de Confianza en tu Colonia
-          </h1>
-
-          <p style={{
-            color: '#94a3b8',
-            fontSize: '1rem',
-            lineHeight: '1.6',
-            marginBottom: '2rem'
-          }}>
-            La plataforma comunitaria de la Sierra Gorda que conecta directamente a plomeros, electricistas, carpinteros y más con vecinos del pueblo. ¡Trato local, directo y sin pagar comisiones!
-          </p>
-
-          {/* Botón de Acción Principal */}
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', width: '100%' }}>
-            <button 
-              className="btn-primary" 
-              onClick={() => { setSearchCategory(''); setCurrentView('mapa'); }}
-              style={{ 
-                fontSize: '1rem', 
-                padding: '0.85rem 1.5rem',
-                boxShadow: '0 4px 14px rgba(20, 184, 166, 0.35)',
-                fontWeight: 'bold',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                flex: '1',
-                justifyContent: 'center',
-                minWidth: '200px'
-              }}
-              id="hero_btn_explore"
-            >
-              <Navigation size={18} />
-              <span>Ver Mapa de Profesionales</span>
-            </button>
-            
-            <button 
-              className="btn-secondary" 
-              onClick={() => { setCurrentView('proveedor'); }}
-              style={{ 
-                fontSize: '1rem', 
-                padding: '0.85rem 1.5rem',
-                fontWeight: 'bold',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                flex: '1',
-                justifyContent: 'center',
-                minWidth: '200px'
-              }}
-              id="hero_btn_join_as_provider"
-            >
-              <Briefcase size={18} />
-              <span>Ofrecer mis Servicios</span>
-            </button>
-          </div>
-        </div>
       </section>
 
       {/* 2. Grid de Categorías de Oficios - Con Brillo de Color y Muy Amigable */}
