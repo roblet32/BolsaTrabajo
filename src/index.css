@@ -1635,3 +1635,13 @@ body.theme-light .mail-simulator-actions {
   border-top-color: rgba(0, 0, 0, 0.05);
 }
 
+/* Responsividad premium para cuadrículas y layouts en móviles */
+@media (max-width: 768px) {
+  .d-flex-column-mobile {
+    grid-template-columns: 1fr !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2rem !important;
+  }
+}
+
