@@ -2,19 +2,12 @@ import { Wrench, Shield, Zap, Hammer, Key, TreePine, Paintbrush, Star, Navigatio
 import { useApp } from '../context/AppContext';
 
 export const LandingPage: React.FC = () => {
-  const { setSearchCategory, setCurrentView, profiles } = useApp();
+  const { setSearchCategory, setCurrentView } = useApp();
 
   const handleCategorySelect = (cat: string) => {
     setSearchCategory(cat);
     setCurrentView('mapa');
   };
-
-  // Obtener estadísticas y perfiles reales activos
-  const activeProviders = profiles.filter(p => p.role === 'prestador' && p.isActive !== false);
-  const providerCount = activeProviders.length;
-  const avgRate = providerCount > 0 
-    ? Math.round(activeProviders.reduce((sum, p) => sum + p.rate, 0) / providerCount)
-    : 125;
 
   return (
     <div style={{ flex: 1, overflowX: 'hidden', position: 'relative' }}>
@@ -199,11 +192,7 @@ export const LandingPage: React.FC = () => {
           ¿Qué servicio necesitas hoy en casa?
         </h2>
         
-        <div className="categories-grid" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-          gap: '1.25rem'
-        }}>
+        <div className="categories-grid">
           {/* Plomería */}
           <div 
             className="glass-card category-card" 
@@ -507,42 +496,6 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 4. Sección de Estadísticas de la Sierra */}
-      <section style={{ padding: '4rem 2rem', background: 'rgba(255,255,255,0.01)' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '2.5rem', textAlign: 'center' }}>
-          <div>
-            <div style={{ fontSize: '3rem', fontWeight: '850', color: 'var(--primary-light)', fontFamily: 'var(--font-heading)' }}>
-              {providerCount || 2}
-            </div>
-            <strong style={{ fontSize: '1.05rem', display: 'block', margin: '0.35rem 0', color: 'var(--text-dark-primary)' }}>Profesionales Activos</strong>
-            <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Verificados con cobertura local en Jalpan</span>
-          </div>
-
-          <div>
-            <div style={{ fontSize: '3rem', fontWeight: '850', color: 'var(--secondary-color)', fontFamily: 'var(--font-heading)' }}>
-              ${avgRate} <span style={{ fontSize: '1.3rem', color: 'var(--text-muted)' }}>/ hr</span>
-            </div>
-            <strong style={{ fontSize: '1.05rem', display: 'block', margin: '0.35rem 0', color: 'var(--text-dark-primary)' }}>Tarifa Promedio</strong>
-            <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Precios competitivos del mercado serrano</span>
-          </div>
-
-          <div>
-            <div style={{ fontSize: '3rem', fontWeight: '850', color: '#10b981', fontFamily: 'var(--font-heading)' }}>
-              100%
-            </div>
-            <strong style={{ fontSize: '1.05rem', display: 'block', margin: '0.35rem 0', color: 'var(--text-dark-primary)' }}>Sin Comisiones</strong>
-            <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Todo el beneficio es íntegro para el trabajador</span>
-          </div>
-
-          <div>
-            <div style={{ fontSize: '3rem', fontWeight: '850', color: 'var(--accent-color)', fontFamily: 'var(--font-heading)' }}>
-              &lt; 5 km
-            </div>
-            <strong style={{ fontSize: '1.05rem', display: 'block', margin: '0.35rem 0', color: 'var(--text-dark-primary)' }}>Máxima Proximidad</strong>
-            <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Filtro de distancia dinámico e inteligente</span>
-          </div>
-        </div>
-      </section>
 
       {/* 5. Sección Por Qué Elegirnos - Diseñado para Jalpan */}
       <section style={{ padding: '5rem 2rem', maxWidth: '1200px', margin: '0 auto' }}>
