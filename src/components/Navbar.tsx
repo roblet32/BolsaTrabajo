@@ -11,7 +11,7 @@ export const Navbar: React.FC = () => {
         <div className="brand-logo">
           <Briefcase size={22} />
         </div>
-        <span className="brand-name">JalpanTrabajo</span>
+        <span className="brand-name">Trabajalpan</span>
       </div>
 
       <nav className="nav-menu">
@@ -23,7 +23,7 @@ export const Navbar: React.FC = () => {
           <Home size={18} />
           <span>Inicio</span>
         </button>
-        
+
         {/* Buscar Servicios (Siempre visible) */}
         <button
           className={`nav-item ${currentView === 'mapa' ? 'active' : ''}`}
@@ -79,23 +79,23 @@ export const Navbar: React.FC = () => {
 
         {/* Pestaña de Administración visible si el usuario es Admin real */}
         {user && (
-          user.role === 'admin' || 
+          user.role === 'admin' ||
           user.email?.toLowerCase() === 'josemanuelvillaguillon@gmail.com' ||
           localStorage.getItem('b_is_super_admin') === 'true'
         ) && (
-          <button
-            className={`nav-item ${currentView === 'admin' ? 'active' : ''}`}
-            onClick={() => setCurrentView('admin')}
-            id="nav_btn_admin"
-          >
-            <Shield size={18} />
-            <span>Administración</span>
-          </button>
-        )}
+            <button
+              className={`nav-item ${currentView === 'admin' ? 'active' : ''}`}
+              onClick={() => setCurrentView('admin')}
+              id="nav_btn_admin"
+            >
+              <Shield size={18} />
+              <span>Administración</span>
+            </button>
+          )}
       </nav>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-        
+
         {/* Botón de Alternancia de Tema (Modo Claro/Modo Noche) */}
         <button
           onClick={toggleTheme}
@@ -133,36 +133,36 @@ export const Navbar: React.FC = () => {
 
             {/* Switcher de Roles (Solo visible en desarrollo local o para el superadministrador en producción) */}
             {user && (
-              (!isSupabaseConfigured) || 
+              (!isSupabaseConfigured) ||
               (user.email?.toLowerCase() === 'josemanuelvillaguillon@gmail.com')
             ) && (
-              <div className="role-switcher-container">
-                <button
-                  className={`role-btn ${role === 'cliente' ? 'active-client' : ''}`}
-                  onClick={() => setUserRole('cliente')}
-                  title="Cambiar a vista de Cliente"
-                  id="role_switch_cliente"
-                >
-                  Cliente
-                </button>
-                <button
-                  className={`role-btn ${role === 'prestador' ? 'active-provider' : ''}`}
-                  onClick={() => setUserRole('prestador')}
-                  title="Cambiar a vista de Proveedor"
-                  id="role_switch_prestador"
-                >
-                  Proveedor
-                </button>
-                <button
-                  className={`role-btn ${role === 'admin' ? 'active-admin' : ''}`}
-                  onClick={() => setUserRole('admin')}
-                  title="Cambiar a vista de Administrador"
-                  id="role_switch_admin"
-                >
-                  Admin
-                </button>
-              </div>
-            )}
+                <div className="role-switcher-container">
+                  <button
+                    className={`role-btn ${role === 'cliente' ? 'active-client' : ''}`}
+                    onClick={() => setUserRole('cliente')}
+                    title="Cambiar a vista de Cliente"
+                    id="role_switch_cliente"
+                  >
+                    Cliente
+                  </button>
+                  <button
+                    className={`role-btn ${role === 'prestador' ? 'active-provider' : ''}`}
+                    onClick={() => setUserRole('prestador')}
+                    title="Cambiar a vista de Proveedor"
+                    id="role_switch_prestador"
+                  >
+                    Proveedor
+                  </button>
+                  <button
+                    className={`role-btn ${role === 'admin' ? 'active-admin' : ''}`}
+                    onClick={() => setUserRole('admin')}
+                    title="Cambiar a vista de Administrador"
+                    id="role_switch_admin"
+                  >
+                    Admin
+                  </button>
+                </div>
+              )}
 
             {/* Botón Salir */}
             <button

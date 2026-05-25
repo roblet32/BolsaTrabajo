@@ -1,41 +1,41 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Users, 
-  User, 
-  Briefcase, 
-  Calendar, 
-  MessageSquare, 
-  Search, 
-  Filter, 
-  Trash2, 
-  Edit3, 
-  ShieldAlert, 
-  CheckCircle2, 
-  AlertOctagon, 
-  Shield, 
-  X, 
-  Star, 
-  RefreshCw, 
-  Lock, 
-  Unlock, 
-  Phone, 
-  FileText, 
-  Check, 
-  DollarSign, 
-  Clock 
+import {
+  Users,
+  User,
+  Briefcase,
+  Calendar,
+  MessageSquare,
+  Search,
+  Filter,
+  Trash2,
+  Edit3,
+  ShieldAlert,
+  CheckCircle2,
+  AlertOctagon,
+  Shield,
+  X,
+  Star,
+  RefreshCw,
+  Lock,
+  Unlock,
+  Phone,
+  FileText,
+  Check,
+  DollarSign,
+  Clock
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { db, Profile, Review } from '../services/db';
 
 export const AdminDashboard: React.FC = () => {
-  const { 
-    profiles, 
-    appointments, 
-    deleteProfile, 
-    toggleProfileActive, 
-    deleteReview, 
-    deleteAppointment, 
-    refreshProfiles, 
+  const {
+    profiles,
+    appointments,
+    deleteProfile,
+    toggleProfileActive,
+    deleteReview,
+    deleteAppointment,
+    refreshProfiles,
     refreshAppointments,
     signUpAdmin
   } = useApp();
@@ -158,7 +158,7 @@ export const AdminDashboard: React.FC = () => {
     return profiles.filter(p => {
       // Filtro por término de búsqueda
       const term = userSearch.toLowerCase().trim();
-      const matchesSearch = term === '' || 
+      const matchesSearch = term === '' ||
         p.name.toLowerCase().includes(term) ||
         p.phone.includes(term) ||
         p.bio.toLowerCase().includes(term) ||
@@ -169,8 +169,8 @@ export const AdminDashboard: React.FC = () => {
 
       // Filtro por estado
       const isActive = p.isActive !== false; // por defecto es activo
-      const matchesStatus = userStatusFilter === 'todos' || 
-        (userStatusFilter === 'activos' && isActive) || 
+      const matchesStatus = userStatusFilter === 'todos' ||
+        (userStatusFilter === 'activos' && isActive) ||
         (userStatusFilter === 'suspendidos' && !isActive);
 
       return matchesSearch && matchesRole && matchesStatus;
@@ -203,9 +203,9 @@ export const AdminDashboard: React.FC = () => {
   const handleToggleActive = async (user: Profile) => {
     const isCurrentlyActive = user.isActive !== false;
     const actionWord = isCurrentlyActive ? 'SUSPENDER' : 'ACTIVAR';
-    const confirmMessage = `¿Está seguro de que desea ${actionWord} la cuenta de "${user.name}"?\n` + 
-      (isCurrentlyActive 
-        ? 'Si lo suspende, no aparecerá en las búsquedas ni en los mapas de servicios para clientes.' 
+    const confirmMessage = `¿Está seguro de que desea ${actionWord} la cuenta de "${user.name}"?\n` +
+      (isCurrentlyActive
+        ? 'Si lo suspende, no aparecerá en las búsquedas ni en los mapas de servicios para clientes.'
         : 'Volverá a estar visible y activo en la plataforma.');
 
     if (window.confirm(confirmMessage)) {
@@ -225,7 +225,7 @@ export const AdminDashboard: React.FC = () => {
       return;
     }
 
-    const confirmMessage = `⚠️ ¡ATENCIÓN! ¿Está seguro de que desea ELIMINAR permanentemente la cuenta de "${user.name}"?\n\n` + 
+    const confirmMessage = `⚠️ ¡ATENCIÓN! ¿Está seguro de que desea ELIMINAR permanentemente la cuenta de "${user.name}"?\n\n` +
       'Esta acción borrará por completo su perfil de la base de datos y no se puede deshacer.';
 
     if (window.confirm(confirmMessage)) {
@@ -300,10 +300,10 @@ export const AdminDashboard: React.FC = () => {
 
       await db.saveProfile(updated as Profile);
       await refreshProfiles();
-      
+
       // Si editamos un prestador cuyas reseñas afectaron el estado actual, también refrescamos reseñas
       await loadReviews();
-      
+
       setEditingUser(null);
     } catch (err) {
       alert('Error al guardar el perfil.');
@@ -330,8 +330,8 @@ export const AdminDashboard: React.FC = () => {
             </p>
           </div>
 
-          <button 
-            className="btn-secondary" 
+          <button
+            className="btn-secondary"
             onClick={handleGlobalRefresh}
             disabled={isRefreshing}
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.2rem' }}
@@ -414,7 +414,7 @@ export const AdminDashboard: React.FC = () => {
         overflowX: 'auto',
         paddingBottom: '2px'
       }}>
-        <button 
+        <button
           className={`admin-tab-btn ${activeTab === 'users' ? 'active' : ''}`}
           onClick={() => setActiveTab('users')}
           style={{
@@ -437,7 +437,7 @@ export const AdminDashboard: React.FC = () => {
           <span>Gestión de Usuarios ({filteredUsers.length})</span>
         </button>
 
-        <button 
+        <button
           className={`admin-tab-btn ${activeTab === 'reviews' ? 'active' : ''}`}
           onClick={() => setActiveTab('reviews')}
           style={{
@@ -460,7 +460,7 @@ export const AdminDashboard: React.FC = () => {
           <span>Moderación de Reseñas ({filteredReviews.length})</span>
         </button>
 
-        <button 
+        <button
           className={`admin-tab-btn ${activeTab === 'appointments' ? 'active' : ''}`}
           onClick={() => setActiveTab('appointments')}
           style={{
@@ -483,7 +483,7 @@ export const AdminDashboard: React.FC = () => {
           <span>Monitoreo de Citas ({filteredAppointments.length})</span>
         </button>
 
-        <button 
+        <button
           className={`admin-tab-btn ${activeTab === 'new_admin' ? 'active' : ''}`}
           onClick={() => setActiveTab('new_admin')}
           style={{
@@ -589,11 +589,11 @@ export const AdminDashboard: React.FC = () => {
                     filteredUsers.map((u) => {
                       const isActive = u.isActive !== false;
                       return (
-                        <tr 
-                          key={u.id} 
+                        <tr
+                          key={u.id}
                           className={!isActive ? 'user-suspended-row' : ''}
-                          style={{ 
-                            borderBottom: '1px solid var(--bg-dark-card-border)', 
+                          style={{
+                            borderBottom: '1px solid var(--bg-dark-card-border)',
                             transition: 'var(--transition-fast)',
                             opacity: isActive ? 1 : 0.65,
                             background: !isActive ? 'rgba(239, 68, 68, 0.02)' : 'none'
@@ -606,15 +606,15 @@ export const AdminDashboard: React.FC = () => {
                                 width: '40px',
                                 height: '40px',
                                 borderRadius: '50%',
-                                background: u.role === 'admin' 
-                                  ? 'rgba(239, 68, 68, 0.2)' 
-                                  : u.role === 'prestador' 
-                                    ? 'rgba(245, 158, 11, 0.2)' 
+                                background: u.role === 'admin'
+                                  ? 'rgba(239, 68, 68, 0.2)'
+                                  : u.role === 'prestador'
+                                    ? 'rgba(245, 158, 11, 0.2)'
                                     : 'rgba(79, 70, 229, 0.2)',
-                                color: u.role === 'admin' 
-                                  ? 'var(--danger)' 
-                                  : u.role === 'prestador' 
-                                    ? 'var(--secondary-color)' 
+                                color: u.role === 'admin'
+                                  ? 'var(--danger)'
+                                  : u.role === 'prestador'
+                                    ? 'var(--secondary-color)'
                                     : '#818cf8',
                                 display: 'flex',
                                 alignItems: 'center',
@@ -642,15 +642,15 @@ export const AdminDashboard: React.FC = () => {
                               textTransform: 'uppercase',
                               padding: '0.25rem 0.5rem',
                               borderRadius: '4px',
-                              background: u.role === 'admin' 
-                                ? 'rgba(239, 68, 68, 0.15)' 
-                                : u.role === 'prestador' 
-                                  ? 'rgba(245, 158, 11, 0.15)' 
+                              background: u.role === 'admin'
+                                ? 'rgba(239, 68, 68, 0.15)'
+                                : u.role === 'prestador'
+                                  ? 'rgba(245, 158, 11, 0.15)'
                                   : 'rgba(79, 70, 229, 0.15)',
-                              color: u.role === 'admin' 
-                                ? 'var(--danger)' 
-                                : u.role === 'prestador' 
-                                  ? 'var(--secondary-color)' 
+                              color: u.role === 'admin'
+                                ? 'var(--danger)'
+                                : u.role === 'prestador'
+                                  ? 'var(--secondary-color)'
                                   : '#818cf8'
                             }}>
                               {u.role === 'admin' ? 'Administrador' : u.role === 'prestador' ? 'Proveedor' : 'Cliente'}
@@ -716,11 +716,11 @@ export const AdminDashboard: React.FC = () => {
                                 className="btn-secondary"
                                 onClick={() => handleToggleActive(u)}
                                 title={isActive ? 'Suspender Usuario' : 'Activar Usuario'}
-                                style={{ 
-                                  padding: '0.4rem', 
-                                  borderRadius: '8px', 
-                                  display: 'flex', 
-                                  alignItems: 'center', 
+                                style={{
+                                  padding: '0.4rem',
+                                  borderRadius: '8px',
+                                  display: 'flex',
+                                  alignItems: 'center',
                                   justifyContent: 'center',
                                   background: isActive ? 'rgba(245, 158, 11, 0.1)' : 'rgba(16, 185, 129, 0.1)',
                                   border: '1px solid transparent'
@@ -738,11 +738,11 @@ export const AdminDashboard: React.FC = () => {
                                   className="btn-secondary"
                                   onClick={() => handleDeleteUser(u)}
                                   title="Eliminar permanentemente"
-                                  style={{ 
-                                    padding: '0.4rem', 
-                                    borderRadius: '8px', 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
+                                  style={{
+                                    padding: '0.4rem',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    alignItems: 'center',
                                     justifyContent: 'center',
                                     background: 'rgba(239, 68, 68, 0.1)',
                                     border: '1px solid transparent'
@@ -802,18 +802,18 @@ export const AdminDashboard: React.FC = () => {
               {filteredReviews.map((r) => {
                 // Encontrar datos del prestador para mostrar su nombre
                 const targetProvider = profiles.find(p => p.id === r.prestadorId);
-                
+
                 return (
-                  <div key={r.id} className="glass-card" style={{ 
-                    padding: '1.5rem', 
-                    display: 'flex', 
-                    flexDirection: 'column', 
+                  <div key={r.id} className="glass-card" style={{
+                    padding: '1.5rem',
+                    display: 'flex',
+                    flexDirection: 'column',
                     justifyContent: 'space-between',
                     borderTop: '3px solid var(--secondary-color)',
                     position: 'relative'
                   }}>
                     {/* Botón borrar en esquina */}
-                    <button 
+                    <button
                       onClick={() => handleDeleteReview(r.id)}
                       title="Eliminar Reseña Inapropiada"
                       style={{
@@ -863,10 +863,10 @@ export const AdminDashboard: React.FC = () => {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                         <div style={{ display: 'flex', color: 'var(--secondary-color)' }}>
                           {Array.from({ length: 5 }).map((_, i) => (
-                            <Star 
-                              key={i} 
-                              size={14} 
-                              fill={i < r.score ? 'var(--secondary-color)' : 'none'} 
+                            <Star
+                              key={i}
+                              size={14}
+                              fill={i < r.score ? 'var(--secondary-color)' : 'none'}
                               strokeWidth={2}
                             />
                           ))}
@@ -875,10 +875,10 @@ export const AdminDashboard: React.FC = () => {
                       </div>
 
                       {/* Comentario */}
-                      <p style={{ 
-                        margin: '0 0 1rem 0', 
-                        fontSize: '0.9rem', 
-                        color: 'var(--text-dark-primary)', 
+                      <p style={{
+                        margin: '0 0 1rem 0',
+                        fontSize: '0.9rem',
+                        color: 'var(--text-dark-primary)',
                         lineHeight: 1.4,
                         fontStyle: 'italic',
                         background: 'rgba(255, 255, 255, 0.02)',
@@ -891,7 +891,7 @@ export const AdminDashboard: React.FC = () => {
                     </div>
 
                     {/* Info de Prestador Relacionado */}
-                    <div style={{ 
+                    <div style={{
                       marginTop: 'auto',
                       paddingTop: '0.75rem',
                       borderTop: '1px solid var(--bg-dark-card-border)',
@@ -1007,11 +1007,11 @@ export const AdminDashboard: React.FC = () => {
                               onClick={() => handleCancelAppointment(a.id)}
                               className="btn-secondary"
                               title="Cancelar y eliminar cita"
-                              style={{ 
-                                padding: '0.4rem 0.6rem', 
-                                fontSize: '0.75rem', 
-                                background: 'rgba(239, 68, 68, 0.1)', 
-                                color: 'var(--danger)', 
+                              style={{
+                                padding: '0.4rem 0.6rem',
+                                fontSize: '0.75rem',
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                color: 'var(--danger)',
                                 border: '1px solid transparent',
                                 borderRadius: '6px',
                                 display: 'inline-flex',
@@ -1138,7 +1138,7 @@ export const AdminDashboard: React.FC = () => {
                   <input
                     type="email"
                     required
-                    placeholder="administrador@jalpantrabajo.com"
+                    placeholder="administrador@Trabajalpan.com"
                     className="search-field"
                     value={adminEmail}
                     onChange={(e) => setAdminEmail(e.target.value)}
@@ -1382,12 +1382,12 @@ export const AdminDashboard: React.FC = () => {
                 <button
                   type="submit"
                   className="btn-primary"
-                  style={{ 
-                    padding: '0.6rem 1.5rem', 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                  style={{
+                    padding: '0.6rem 1.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: '0.35rem',
-                    background: 'var(--primary-color)' 
+                    background: 'var(--primary-color)'
                   }}
                 >
                   <Check size={16} />

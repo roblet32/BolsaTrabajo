@@ -11,7 +11,7 @@ export const LandingPage: React.FC = () => {
 
   return (
     <div style={{ flex: 1, overflowX: 'hidden', position: 'relative' }}>
-      
+
       {/* Halos y luces de fondo ambientales para diseño de alta gama */}
       <div className="ambient-halo-1"></div>
       <div className="ambient-halo-2"></div>
@@ -26,7 +26,7 @@ export const LandingPage: React.FC = () => {
         alignItems: 'center',
         textAlign: 'center'
       }} className="hero-section-container">
-        
+
         {/* Badge de Bienvenida - Centrado */}
         <div style={{
           display: 'inline-flex',
@@ -42,7 +42,7 @@ export const LandingPage: React.FC = () => {
           marginBottom: '1.5rem',
           boxShadow: '0 2px 8px rgba(20, 184, 166, 0.05)'
         }}>
-          <span>👋 Bienvenidos a tu Bolsa de Trabajo Local</span>
+          <span>👋 Bienvenido a tu Bolsa de Trabajo Local, aqui encontraras todo tipo de trabajadores dispuestos a colaborar con tus proyectos</span>
         </div>
 
         {/* Título Principal - Centrado y Súper Nítido */}
@@ -58,7 +58,7 @@ export const LandingPage: React.FC = () => {
           WebkitTextFillColor: 'transparent',
           maxWidth: '850px'
         }} className="hero-title-responsive">
-          Encuentra Expertos de Confianza en tu Colonia
+          Encuentra Expertos de Confianza en tu Comunidad
         </h1>
 
         {/* Subtítulo Descriptivo - Centrado */}
@@ -82,11 +82,11 @@ export const LandingPage: React.FC = () => {
           maxWidth: '560px',
           marginBottom: '4rem'
         }}>
-          <button 
-            className="btn-primary" 
+          <button
+            className="btn-primary"
             onClick={() => { setSearchCategory(''); setCurrentView('mapa'); }}
-            style={{ 
-              fontSize: '1.05rem', 
+            style={{
+              fontSize: '1.05rem',
               padding: '1rem 2rem',
               boxShadow: '0 6px 20px rgba(20, 184, 166, 0.3)',
               fontWeight: 'bold',
@@ -104,12 +104,12 @@ export const LandingPage: React.FC = () => {
             <Navigation size={18} />
             <span>Ver Mapa de Profesionales</span>
           </button>
-          
-          <button 
-            className="btn-secondary" 
+
+          <button
+            className="btn-secondary"
             onClick={() => { setCurrentView('proveedor'); }}
-            style={{ 
-              fontSize: '1.05rem', 
+            style={{
+              fontSize: '1.05rem',
               padding: '1rem 2rem',
               fontWeight: 'bold',
               display: 'flex',
@@ -140,9 +140,9 @@ export const LandingPage: React.FC = () => {
           maxWidth: '1000px',
           transition: 'all 0.4s ease'
         }} className="hero-banner-card">
-          <img 
-            src="/jalpan_landscape.png" 
-            alt="Misión Franciscana de Jalpan de Serra Querétaro" 
+          <img
+            src="/jalpan_landscape.png"
+            alt="Misión Franciscana de Jalpan de Serra Querétaro"
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
           {/* Overlay Degradado Premium para la Imagen */}
@@ -160,21 +160,21 @@ export const LandingPage: React.FC = () => {
             padding: '2.5rem 2rem',
             textAlign: 'center'
           }}>
-            <span style={{ 
-              color: '#ffffff', 
-              fontWeight: '800', 
-              fontSize: '1.75rem', 
-              fontFamily: 'var(--font-heading)', 
+            <span style={{
+              color: '#ffffff',
+              fontWeight: '800',
+              fontSize: '1.75rem',
+              fontFamily: 'var(--font-heading)',
               textShadow: '0 2px 10px rgba(0,0,0,0.85)',
               letterSpacing: '-0.01em'
             }}>
               Misión de Santiago de Jalpan
             </span>
-            <span style={{ 
-              color: 'var(--primary-light)', 
-              fontSize: '0.95rem', 
-              fontWeight: '700', 
-              marginTop: '0.5rem', 
+            <span style={{
+              color: 'var(--primary-light)',
+              fontSize: '0.95rem',
+              fontWeight: '700',
+              marginTop: '0.5rem',
               textShadow: '0 1px 4px rgba(0,0,0,0.6)',
               letterSpacing: '0.08em',
               textTransform: 'uppercase'
@@ -191,12 +191,12 @@ export const LandingPage: React.FC = () => {
         <h2 style={{ textAlign: 'center', marginBottom: '2.5rem', fontSize: '1.85rem', fontWeight: '800', color: 'var(--text-dark-primary)' }}>
           ¿Qué servicio necesitas hoy en casa?
         </h2>
-        
+
         <div className="categories-grid">
           {/* Plomería */}
-          <div 
-            className="glass-card category-card" 
-            onClick={() => handleCategorySelect('plomería')} 
+          <div
+            className="glass-card category-card"
+            onClick={() => handleCategorySelect('plomería')}
             id="cat_card_plomeria"
             style={{
               padding: '2rem 1rem',
@@ -213,9 +213,9 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* Electricidad */}
-          <div 
-            className="glass-card category-card" 
-            onClick={() => handleCategorySelect('electricidad')} 
+          <div
+            className="glass-card category-card"
+            onClick={() => handleCategorySelect('electricidad')}
             id="cat_card_electricidad"
             style={{
               padding: '2rem 1rem',
@@ -232,9 +232,9 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* Carpintería */}
-          <div 
-            className="glass-card category-card" 
-            onClick={() => handleCategorySelect('carpintería')} 
+          <div
+            className="glass-card category-card"
+            onClick={() => handleCategorySelect('carpintería')}
             id="cat_card_carpinteria"
             style={{
               padding: '2rem 1rem',
@@ -251,9 +251,9 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* Cerrajería */}
-          <div 
-            className="glass-card category-card" 
-            onClick={() => handleCategorySelect('cerrajería')} 
+          <div
+            className="glass-card category-card"
+            onClick={() => handleCategorySelect('cerrajería')}
             id="cat_card_cerrajeria"
             style={{
               padding: '2rem 1rem',
@@ -270,9 +270,9 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* Jardinería */}
-          <div 
-            className="glass-card category-card" 
-            onClick={() => handleCategorySelect('jardinería')} 
+          <div
+            className="glass-card category-card"
+            onClick={() => handleCategorySelect('jardinería')}
             id="cat_card_jardineria"
             style={{
               padding: '2rem 1rem',
@@ -289,9 +289,9 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* Pintura */}
-          <div 
-            className="glass-card category-card" 
-            onClick={() => handleCategorySelect('pintura')} 
+          <div
+            className="glass-card category-card"
+            onClick={() => handleCategorySelect('pintura')}
             id="cat_card_pintura"
             style={{
               padding: '2rem 1rem',
@@ -322,7 +322,7 @@ export const LandingPage: React.FC = () => {
           border: '1px solid var(--bg-dark-card-border)',
           boxShadow: 'var(--shadow-md)'
         }}>
-          
+
           <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
             <h2 style={{ fontSize: '1.85rem', fontWeight: '800', color: 'var(--text-dark-primary)', marginBottom: '0.5rem' }}>
               El Corazón del Proyecto: Propósito y Motivo
@@ -339,7 +339,7 @@ export const LandingPage: React.FC = () => {
                 🎯 Nuestro Propósito
               </h3>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: '1.6', textAlign: 'justify' }}>
-                <strong>JalpanTrabajo</strong> nació como una iniciativa tecnológica y social diseñada para empoderar a los trabajadores locales, técnicos y prestadores de oficios de Jalpan de Serra y Querétaro. Nuestro propósito es proveer una vitrina digital moderna y completamente gratuita, donde los profesionales de la Sierra Gorda puedan geolocalizarse, exhibir fotos reales de sus trabajos y conectar al instante con vecinos que requieren de su experiencia para solucionar problemas del hogar.
+                <strong>Trabajalpan</strong> nació como una iniciativa tecnológica y social diseñada para empoderar a los trabajadores locales, técnicos y prestadores de oficios de Jalpan de Serra y Querétaro. Nuestro propósito es proveer una vitrina digital moderna y completamente gratuita, donde los profesionales de la Sierra Gorda puedan geolocalizarse, exhibir fotos reales de sus trabajos y conectar al instante con vecinos que requieren de su experiencia para solucionar problemas del hogar.
               </p>
             </div>
 
@@ -355,8 +355,8 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* Pilares Informativos */}
-          <div style={{ 
-            borderTop: '1px solid var(--bg-dark-card-border)', 
+          <div style={{
+            borderTop: '1px solid var(--bg-dark-card-border)',
             paddingTop: '2rem',
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
@@ -391,15 +391,15 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* 3. ¿Cómo funciona? - Sección Increíblemente Amigable y Clara */}
-      <section style={{ 
-        padding: '5rem 2rem', 
+      <section style={{
+        padding: '5rem 2rem',
         background: 'linear-gradient(180deg, transparent 0%, rgba(20, 184, 166, 0.02) 50%, transparent 100%)',
         borderTop: '1px solid var(--bg-dark-card-border)',
         borderBottom: '1px solid var(--bg-dark-card-border)'
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <h2 style={{ textAlign: 'center', marginBottom: '0.5rem', fontSize: '1.85rem', fontWeight: '800', color: 'var(--text-dark-primary)' }}>
-            ¿Cómo funciona JalpanTrabajo?
+            ¿Cómo funciona Trabajalpan?
           </h2>
           <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '3.5rem' }}>
             Tres sencillos pasos para solucionar cualquier desperfecto en tu hogar de forma rápida.
@@ -408,19 +408,19 @@ export const LandingPage: React.FC = () => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
             {/* Paso 1 */}
             <div className="glass-card" style={{ padding: '2.25rem', textAlign: 'center', position: 'relative' }}>
-              <div style={{ 
-                position: 'absolute', 
-                top: '-20px', 
-                left: '50%', 
-                transform: 'translateX(-50%)', 
-                width: '40px', 
-                height: '40px', 
-                borderRadius: '50%', 
-                background: 'var(--primary-light)', 
-                color: 'var(--bg-dark-container)', 
-                fontWeight: 'bold', 
-                display: 'flex', 
-                alignItems: 'center', 
+              <div style={{
+                position: 'absolute',
+                top: '-20px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                background: 'var(--primary-light)',
+                color: 'var(--bg-dark-container)',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
                 boxShadow: '0 4px 10px rgba(20, 184, 166, 0.3)'
               }}>
@@ -437,19 +437,19 @@ export const LandingPage: React.FC = () => {
 
             {/* Paso 2 */}
             <div className="glass-card" style={{ padding: '2.25rem', textAlign: 'center', position: 'relative' }}>
-              <div style={{ 
-                position: 'absolute', 
-                top: '-20px', 
-                left: '50%', 
-                transform: 'translateX(-50%)', 
-                width: '40px', 
-                height: '40px', 
-                borderRadius: '50%', 
-                background: 'var(--primary-light)', 
-                color: 'var(--bg-dark-container)', 
-                fontWeight: 'bold', 
-                display: 'flex', 
-                alignItems: 'center', 
+              <div style={{
+                position: 'absolute',
+                top: '-20px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                background: 'var(--primary-light)',
+                color: 'var(--bg-dark-container)',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
                 boxShadow: '0 4px 10px rgba(20, 184, 166, 0.3)'
               }}>
@@ -466,19 +466,19 @@ export const LandingPage: React.FC = () => {
 
             {/* Paso 3 */}
             <div className="glass-card" style={{ padding: '2.25rem', textAlign: 'center', position: 'relative' }}>
-              <div style={{ 
-                position: 'absolute', 
-                top: '-20px', 
-                left: '50%', 
-                transform: 'translateX(-50%)', 
-                width: '40px', 
-                height: '40px', 
-                borderRadius: '50%', 
-                background: 'var(--primary-light)', 
-                color: 'var(--bg-dark-container)', 
-                fontWeight: 'bold', 
-                display: 'flex', 
-                alignItems: 'center', 
+              <div style={{
+                position: 'absolute',
+                top: '-20px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                background: 'var(--primary-light)',
+                color: 'var(--bg-dark-container)',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
                 boxShadow: '0 4px 10px rgba(20, 184, 166, 0.3)'
               }}>
@@ -500,7 +500,7 @@ export const LandingPage: React.FC = () => {
       {/* 5. Sección Por Qué Elegirnos - Diseñado para Jalpan */}
       <section style={{ padding: '5rem 2rem', maxWidth: '1200px', margin: '0 auto' }}>
         <h2 style={{ textAlign: 'center', marginBottom: '3.5rem', fontSize: '1.85rem', fontWeight: '800', color: 'var(--text-dark-primary)' }}>
-          ¿Por qué elegir JalpanTrabajo?
+          ¿Por qué elegir Trabajalpan?
         </h2>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>

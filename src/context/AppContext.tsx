@@ -126,11 +126,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   async function refreshProfiles() {
     const isCurrentUserAdmin = isSupabaseConfigured
       ? (user && (user.role === 'admin' || user.email?.toLowerCase() === 'josemanuelvillaguillon@gmail.com'))
-      : ((user && user.role === 'admin') || 
-         localStorage.getItem('b_is_super_admin') === 'true' ||
-         (typeof window !== 'undefined' && JSON.parse(localStorage.getItem('b_current_user') || 'null')?.role === 'admin'));
+      : ((user && user.role === 'admin') ||
+        localStorage.getItem('b_is_super_admin') === 'true' ||
+        (typeof window !== 'undefined' && JSON.parse(localStorage.getItem('b_current_user') || 'null')?.role === 'admin'));
     const p = isCurrentUserAdmin
-      ? await db.adminGetAllProfiles() 
+      ? await db.adminGetAllProfiles()
       : await db.getProfiles();
     setProfiles(p);
 
@@ -210,7 +210,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (session?.user) {
           // Buscar el perfil correspondiente al ID del usuario autenticado
           let profile = await db.getProfileById(session.user.id);
-          
+
           // Si es un usuario nuevo, el trigger de la base de datos puede tardar milisegundos en crear el perfil.
           if (!profile) {
             await new Promise(r => setTimeout(r, 1200)); // Esperar un poco
@@ -386,7 +386,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Guardar cambios en el perfil del usuario actual
   const updateUserProfile = async (updated: Partial<Profile>) => {
     if (!user) return;
-    
+
     // Obtener la versión de base de datos más fresca para no pisar el estado 'isActive'
     // si el administrador lo acaba de activar pero el navegador local no se ha refrescado.
     let currentActiveState = user.isActive;
@@ -428,8 +428,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // Configurar y disparar notificación de correo
     const emailTo = activeContact.email || `${activeContact.name.toLowerCase().replace(/\s+/g, '')}@gmail.com`;
-    const subject = `Nuevo mensaje de ${user.name} en JalpanTrabajo`;
-    const body = `Hola ${activeContact.name},\n\nHas recibido un nuevo mensaje de ${user.name} en la plataforma Bolsa de Trabajo Jalpan de Serra:\n\n"${content}"\n\nPara responder a este mensaje, por favor inicia sesión en la plataforma:\nhttps://bolsa-de-trabajo-jalpan.web.app\n\nAtentamente,\nEl Equipo de JalpanTrabajo`;
+    const subject = `Nuevo mensaje de ${user.name} en Trabajalpan`;
+    const body = `Hola ${activeContact.name},\n\nHas recibido un nuevo mensaje de ${user.name} en la plataforma Bolsa de Trabajo Jalpan de Serra:\n\n"${content}"\n\nPara responder a este mensaje, por favor inicia sesión en la plataforma:\nhttps://bolsa-de-trabajo-jalpan.web.app\n\nAtentamente,\nEl Equipo de Trabajalpan`;
 
     // Intentar envío automático en segundo plano con EmailJS
     if (isEmailConfigured()) {
@@ -543,12 +543,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Resiliencia: si es un error de red/fetch, timeout o rate limit de correos, registrar localmente
       const errorObj = err as { message?: string; name?: string };
       if (
-        errorObj?.message?.includes('fetch') || 
-        errorObj?.message?.includes('Network') || 
-        errorObj?.message?.includes('Timeout') || 
-        errorObj?.message?.includes('timeout') || 
-        errorObj?.message?.includes('rate limit') || 
-        errorObj?.message?.includes('limit exceeded') || 
+        errorObj?.message?.includes('fetch') ||
+        errorObj?.message?.includes('Network') ||
+        errorObj?.message?.includes('Timeout') ||
+        errorObj?.message?.includes('timeout') ||
+        errorObj?.message?.includes('rate limit') ||
+        errorObj?.message?.includes('limit exceeded') ||
         errorObj?.name === 'TypeError'
       ) {
         console.warn('Fallo de red, timeout o rate limit en Supabase. Creando cuenta local resiliente...');
@@ -609,7 +609,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const tempClient = createClient(supabaseUrl, supabaseAnonKey, {
         auth: { persistSession: false }
       });
-      
+
       const { error } = await tempClient.auth.signUp({
         email,
         password,
@@ -622,19 +622,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       });
       if (error) throw error;
-      
+
       await refreshProfiles();
     } catch (err) {
       console.error('Error al registrarse en Supabase:', err);
       // Resiliencia: si es un error de red/fetch, timeout o rate limit de correos, registrar localmente
       const errorObj = err as { message?: string; name?: string };
       if (
-        errorObj?.message?.includes('fetch') || 
-        errorObj?.message?.includes('Network') || 
-        errorObj?.message?.includes('Timeout') || 
-        errorObj?.message?.includes('timeout') || 
-        errorObj?.message?.includes('rate limit') || 
-        errorObj?.message?.includes('limit exceeded') || 
+        errorObj?.message?.includes('fetch') ||
+        errorObj?.message?.includes('Network') ||
+        errorObj?.message?.includes('Timeout') ||
+        errorObj?.message?.includes('timeout') ||
+        errorObj?.message?.includes('rate limit') ||
+        errorObj?.message?.includes('limit exceeded') ||
         errorObj?.name === 'TypeError'
       ) {
         // Fallback local
@@ -708,10 +708,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Resiliencia: si es un error de red/fetch o timeout, iniciar sesión localmente
       const errorObj = err as { message?: string; name?: string };
       if (
-        errorObj?.message?.includes('fetch') || 
-        errorObj?.message?.includes('Network') || 
-        errorObj?.message?.includes('Timeout') || 
-        errorObj?.message?.includes('timeout') || 
+        errorObj?.message?.includes('fetch') ||
+        errorObj?.message?.includes('Network') ||
+        errorObj?.message?.includes('Timeout') ||
+        errorObj?.message?.includes('timeout') ||
         errorObj?.name === 'TypeError'
       ) {
         console.warn('Fallo de red o timeout en Supabase. Iniciando sesión de forma local...');
@@ -775,7 +775,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const toggleProfileActive = async (id: string, active: boolean) => {
     await db.adminToggleProfileActive(id, active);
     await refreshProfiles();
-    
+
     // Si el administrador activa la cuenta, intentar enviar correo
     if (active) {
       const p = await db.getProfileById(id);

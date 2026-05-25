@@ -1,24 +1,24 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap');
 
 /* Importar estilos básicos de Leaflet */
 @import 'leaflet/dist/leaflet.css';
 
 :root {
-  --font-heading: 'Outfit', sans-serif;
-  --font-body: 'Plus Jakarta Sans', sans-serif;
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Lato', sans-serif;
 
-  /* Paleta Sierra Gorda Premium - Obsidian, Professional Indigo & Slate Emerald */
-  --primary-color: #5551ff; /* Azul cobalto vibrante y profesional */
-  --primary-light: #706eff; /* Indigo luminoso de alta visibilidad */
-  --primary-dark: #3b37d3;  /* Indigo profundo para contraste */
-  --secondary-color: #0e8f80; /* Pine Teal elegante y profesional */
-  --secondary-light: #14b8a6;
-  --accent-color: #eab308; /* Ámbar Gold de alta legibilidad para reseñas */
+  /* Paleta Jalpan de Serra - Formal & Institucional */
+  --primary-color: #c0452d; /* Terracota vivo (Misión) */
+  --primary-light: #d65a42; /* Terracota luminoso */
+  --primary-dark: #8c2817;  /* Terracota profundo */
+  --secondary-color: #166534; /* Verde bosque / selva */
+  --secondary-light: #22c55e;
+  --accent-color: #f59e0b; /* Amarillo oro (detalles) */
   
   /* variables por defecto: Modo Noche Premium */
-  --bg-dark: #0a0d16; /* Negro pizarra profundo, súper limpio y descansado */
-  --bg-dark-card: rgba(18, 24, 38, 0.78); /* Deep slate-obsidian con un sutil tinte azulado */
-  --bg-dark-card-border: rgba(148, 163, 184, 0.08); /* Borde sutil de alta definición */
+  --bg-dark: #171514; /* Grafito profundo cálido, elegante y formal */
+  --bg-dark-card: rgba(30, 26, 24, 0.85); /* Grafito con tinte cálido terracota sutil */
+  --bg-dark-card-border: rgba(192, 69, 45, 0.08); /* Borde sutil terracota */
 
   --text-dark-primary: #f8fafc; /* Blanco hielo nítido */
   --text-dark-secondary: #94a3b8; /* Gris azulado suave, altamente legible */
@@ -39,40 +39,40 @@
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.15);
   --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.4);
-  --shadow-emerald: 0 8px 24px rgba(85, 81, 255, 0.18);
+  --shadow-emerald: 0 8px 24px rgba(192, 69, 45, 0.18);
 
   --glass-blur: blur(16px);
 
   /* Específicos para controles y contenedores en Modo Noche */
-  --bg-header: rgba(10, 13, 22, 0.85);
-  --bg-input: rgba(18, 24, 38, 0.85); /* Entrada más oscura para contraste */
+  --bg-header: rgba(23, 21, 20, 0.85);
+  --bg-input: rgba(30, 26, 24, 0.85); /* Entrada más oscura para contraste */
   --text-input: #ffffff;
   --bg-role-switcher: rgba(255, 255, 255, 0.035);
   --text-nav-hover: var(--primary-light);
   --bg-nav-hover: rgba(255, 255, 255, 0.05);
   --scrollbar-thumb: rgba(255, 255, 255, 0.1);
-  --bg-chat-messages: rgba(10, 13, 22, 0.98);
-  --bg-chat-bubble-bot: rgba(18, 24, 38, 0.9);
+  --bg-chat-messages: rgba(23, 21, 20, 0.98);
+  --bg-chat-bubble-bot: rgba(30, 26, 24, 0.9);
   --text-chat-bubble-bot: #f1f5f9;
-  --bg-leaflet-container: #0a0d16;
+  --bg-leaflet-container: #171514;
 
   /* Colores Dinámicos de Textos */
-  --text-hero-gradient: linear-gradient(135deg, #ffffff 40%, #a5f3fc 100%);
+  --text-hero-gradient: linear-gradient(135deg, #ffffff 40%, #fcd34d 100%);
   --text-muted: #94a3b8;
 }
 
 /* Modo Claro / Light Theme Overrides Premium */
 body.theme-light {
-  --primary-color: #3b37d3; /* Azul cobalto profundo para alto contraste sobre fondo claro */
-  --primary-light: #5551ff; /* Azul primario legible */
-  --primary-dark: #27249c;
-  --secondary-color: #0d7c70; /* Verde pino para contrastar elegantemente */
-  --secondary-light: #0f9488;
-  --accent-color: #d97706; /* Ámbar oscuro para texto claro */
+  --primary-color: #a83316; /* Terracota profundo para alto contraste sobre fondo claro */
+  --primary-light: #c0452d; /* Terracota primario legible */
+  --primary-dark: #7a220e;
+  --secondary-color: #14532d; /* Verde bosque oscuro para contrastar elegantemente */
+  --secondary-light: #166534;
+  --accent-color: #b45309; /* Ámbar oscuro para texto claro */
 
-  --bg-dark: #f1f5f9; /* Gris slate claro, muy limpio y descansado (evita blanco chillón) */
+  --bg-dark: #fafaf9; /* Warm stone claro, muy limpio y descansado (evita blanco chillón) */
   --bg-dark-card: rgba(255, 255, 255, 0.95); /* Tarjetas blancas opacas ultra limpias */
-  --bg-dark-card-border: rgba(100, 116, 139, 0.12); /* Bordes grises muy detallados y suaves */
+  --bg-dark-card-border: rgba(168, 162, 158, 0.2); /* Bordes warm stone detallados */
   --text-dark-primary: #0f172a; /* Slate oscuro para lectura impecable */
   --text-dark-secondary: #475569; /* Slate intermedio para descripciones detalladas */
   
@@ -80,9 +80,9 @@ body.theme-light {
   --bg-header: rgba(241, 245, 249, 0.85);
   --bg-input: #ffffff; /* Inputs completamente blancos para limpieza total */
   --text-input: #0f172a;
-  --bg-role-switcher: rgba(85, 81, 255, 0.05);
+  --bg-role-switcher: rgba(192, 69, 45, 0.05);
   --text-nav-hover: var(--primary-color);
-  --bg-nav-hover: rgba(85, 81, 255, 0.08);
+  --bg-nav-hover: rgba(192, 69, 45, 0.08);
   --scrollbar-thumb: rgba(100, 116, 139, 0.25);
   --bg-chat-messages: rgba(255, 255, 255, 0.98);
   --bg-chat-bubble-bot: rgba(241, 245, 249, 0.95);
@@ -93,10 +93,10 @@ body.theme-light {
   --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
   --shadow-md: 0 10px 30px rgba(15, 23, 42, 0.06);
   --shadow-lg: 0 20px 50px rgba(15, 23, 42, 0.08);
-  --shadow-emerald: 0 8px 24px rgba(85, 81, 255, 0.08);
+  --shadow-emerald: 0 8px 24px rgba(192, 69, 45, 0.08);
 
   /* Colores Dinámicos de Textos en Modo Claro */
-  --text-hero-gradient: linear-gradient(135deg, #0f172a 35%, #3b37d3 100%);
+  --text-hero-gradient: linear-gradient(135deg, #292524 35%, #c0452d 100%);
   --text-muted: #475569;
 }
 
@@ -131,8 +131,8 @@ body {
   font-family: var(--font-body);
   background-color: var(--bg-dark);
   background-image: 
-    radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.04) 0%, transparent 50%),
-    radial-gradient(circle at 85% 85%, rgba(20, 184, 166, 0.04) 0%, transparent 50%);
+    radial-gradient(circle at 15% 15%, rgba(192, 69, 45, 0.06) 0%, transparent 50%),
+    radial-gradient(circle at 85% 85%, rgba(22, 101, 52, 0.06) 0%, transparent 50%);
   background-attachment: fixed;
   color: var(--text-dark-primary);
   line-height: 1.6;
@@ -203,7 +203,7 @@ button,
 }
 
 .glass-card:hover {
-  border-color: rgba(99, 102, 241, 0.3);
+  border-color: rgba(192, 69, 45, 0.3);
   box-shadow: var(--shadow-lg);
   transform: translateY(-2px);
 }
@@ -289,7 +289,7 @@ button,
 .nav-item.active {
   border-bottom: 2px solid var(--primary-light);
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(192, 69, 45, 0.08);
 }
 
 /* Switcher de Roles Flotante */
@@ -365,7 +365,7 @@ button,
 
 .btn-primary:hover {
   transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 12px 30px rgba(192, 69, 45, 0.4);
 }
 
 .btn-primary:active {
@@ -791,6 +791,22 @@ body.theme-light .leaflet-tile {
 .chatbot-info h4 {
   font-size: 1rem;
   font-weight: 700;
+  color: #ffffff;
+}
+
+.chatbot-header .close-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.chatbot-header .close-btn:hover {
+  color: #ffffff;
 }
 
 .chatbot-info p {

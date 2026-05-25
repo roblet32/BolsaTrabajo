@@ -102,7 +102,7 @@ const MainAppContent: React.FC = () => {
     switch (currentView) {
       case 'inicio':
         return <LandingPage />;
-      
+
       case 'mapa':
         // Vista de Cliente o buscador general
         if (selectedDetailProfile) {
@@ -128,7 +128,7 @@ const MainAppContent: React.FC = () => {
             <div className="providers-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
               <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <h3 style={{ fontSize: '1.1rem', color: 'var(--text-dark-primary)' }}>Filtros de Búsqueda</h3>
-                
+
                 {/* Búsqueda por Texto */}
                 <div className="search-input-group" style={{ margin: 0 }}>
                   <Search size={18} />
@@ -210,14 +210,14 @@ const MainAppContent: React.FC = () => {
                               </span>
                             ))}
                           </div>
-                          
+
                           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
                             <div className="rating-stars">
                               <Star size={14} fill="currentColor" />
                               <strong style={{ fontSize: '0.85rem' }}>{p.rating}</strong>
                               <span>({p.reviewsCount})</span>
                             </div>
-                            
+
                             <div className="provider-distance">
                               <MapPin size={12} />
                               <span>A {dist} km</span>
@@ -251,7 +251,7 @@ const MainAppContent: React.FC = () => {
             </div>
           </div>
         );
-      
+
       case 'citas':
         return <AppointmentList />;
 
@@ -266,7 +266,7 @@ const MainAppContent: React.FC = () => {
 
       case 'admin':
         if (!user || (
-          user.role !== 'admin' && 
+          user.role !== 'admin' &&
           user.email?.toLowerCase() !== 'josemanuelvillaguillon@gmail.com' &&
           localStorage.getItem('b_is_super_admin') !== 'true'
         )) {
@@ -370,7 +370,7 @@ const MainAppContent: React.FC = () => {
                 <strong style={{ color: 'var(--text-dark-secondary, #9ca3af)' }}>Asunto:</strong>
                 <span style={{ fontWeight: '600' }}>{adminNotification.subject}</span>
               </div>
-              
+
               {/* Cuerpo del Correo */}
               <div style={{
                 background: 'rgba(255, 255, 255, 0.02)',
@@ -415,45 +415,45 @@ const MainAppContent: React.FC = () => {
                 gap: '0.75rem',
                 justifyContent: 'end'
               }}>
-              {/* Botón Mailto Real */}
-              <a
-                href={`mailto:${adminNotification.to}?subject=${encodeURIComponent(adminNotification.subject)}&body=${encodeURIComponent(adminNotification.body)}`}
-                style={{
-                  background: '#4f46e5',
-                  color: 'white',
-                  border: 'none',
-                  padding: '0.65rem 1.25rem',
-                  borderRadius: '6px',
-                  fontWeight: 'bold',
-                  textDecoration: 'none',
-                  fontSize: '0.85rem',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                  transition: 'var(--transition-fast)'
-                }}
-                onClick={() => setAdminNotification(null)}
-              >
-                <span>Enviar por Correo Real</span>
-              </a>
+                {/* Botón Mailto Real */}
+                <a
+                  href={`mailto:${adminNotification.to}?subject=${encodeURIComponent(adminNotification.subject)}&body=${encodeURIComponent(adminNotification.body)}`}
+                  style={{
+                    background: '#4f46e5',
+                    color: 'white',
+                    border: 'none',
+                    padding: '0.65rem 1.25rem',
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    textDecoration: 'none',
+                    fontSize: '0.85rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    transition: 'var(--transition-fast)'
+                  }}
+                  onClick={() => setAdminNotification(null)}
+                >
+                  <span>Enviar por Correo Real</span>
+                </a>
 
-              {/* Botón Entendido */}
-              <button
-                className="btn-secondary"
-                style={{
-                  padding: '0.65rem 1.25rem',
-                  fontSize: '0.85rem',
-                  borderRadius: '6px'
-                }}
-                onClick={() => setAdminNotification(null)}
-              >
-                Entendido
-              </button>
+                {/* Botón Entendido */}
+                <button
+                  className="btn-secondary"
+                  style={{
+                    padding: '0.65rem 1.25rem',
+                    fontSize: '0.85rem',
+                    borderRadius: '6px'
+                  }}
+                  onClick={() => setAdminNotification(null)}
+                >
+                  Entendido
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
 
       {/* Toast de Notificación de Correo (Mensajes de Chat) */}
       {chatEmailNotification && chatEmailNotification.show && showChatToast && (
@@ -513,7 +513,7 @@ const MainAppContent: React.FC = () => {
             <div className="mail-simulator-client-meta">
               <div className="mail-simulator-meta-row">
                 <span className="mail-simulator-meta-label">De:</span>
-                <span className="mail-simulator-meta-val">JalpanTrabajo Notificaciones &lt;no-reply@jalpantrabajo.com&gt;</span>
+                <span className="mail-simulator-meta-val">Trabajalpan Notificaciones &lt;no-reply@Trabajalpan.com&gt;</span>
               </div>
               <div className="mail-simulator-meta-row">
                 <span className="mail-simulator-meta-label">Para:</span>
