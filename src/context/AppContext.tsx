@@ -124,9 +124,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   async function refreshProfiles() {
-    const isCurrentUserAdmin = (user && user.role === 'admin') || 
-                               localStorage.getItem('b_is_super_admin') === 'true' ||
-                               (typeof window !== 'undefined' && JSON.parse(localStorage.getItem('b_current_user') || 'null')?.role === 'admin');
+    const isCurrentUserAdmin = isSupabaseConfigured
+      ? (user && (user.role === 'admin' || user.email?.toLowerCase() === 'josemanuelvillaguillon@gmail.com'))
+      : ((user && user.role === 'admin') || 
+         localStorage.getItem('b_is_super_admin') === 'true' ||
+         (typeof window !== 'undefined' && JSON.parse(localStorage.getItem('b_current_user') || 'null')?.role === 'admin'));
     const p = isCurrentUserAdmin
       ? await db.adminGetAllProfiles() 
       : await db.getProfiles();
@@ -189,6 +191,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             if (session.user.email?.toLowerCase() === 'josemanuelvillaguillon@gmail.com') {
               profile.role = 'admin';
               localStorage.setItem('b_is_super_admin', 'true');
+            } else {
+              localStorage.removeItem('b_is_super_admin');
             }
             setUser(profile);
             setRole(profile.role);
@@ -199,6 +203,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             const forcedRole = session.user.email?.toLowerCase() === 'josemanuelvillaguillon@gmail.com' ? 'admin' : (metadata.role || 'cliente');
             if (forcedRole === 'admin') {
               localStorage.setItem('b_is_super_admin', 'true');
+            } else {
+              localStorage.removeItem('b_is_super_admin');
             }
             const isSuperAdmin = session.user.email?.toLowerCase() === 'josemanuelvillaguillon@gmail.com';
             const tempProfile = await db.saveProfile({
@@ -268,8 +274,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Alternar el rol activamente (para pruebas ágiles)
   const setUserRole = async (newRole: 'cliente' | 'prestador' | 'admin') => {
     if (isSupabaseConfigured && supabase) {
-      // En modo Supabase real, el rol está guardado en el perfil. 
-      // Le permitimos cambiar el rol actualizando su registro en Supabase.
+      // En modo Supabase real, solo el administrador real josemanuelvillaguillon@gmail.com puede alternar a admin
+      if (newRole === 'admin' && user?.email?.toLowerCase() !== 'josemanuelvillaguillon@gmail.com') {
+        console.error('Acceso denegado: No tienes privilegios para alternar tu rol a Administrador en producción.');
+        return;
+      }
       if (user) {
         await updateUserProfile({ role: newRole });
       }

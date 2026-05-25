@@ -131,12 +131,10 @@ export const Navbar: React.FC = () => {
               </div>
             </div>
 
-            {/* Switcher de Roles (Visible para Administrador o siempre en modo local/pruebas) */}
+            {/* Switcher de Roles (Solo visible en desarrollo local o para el superadministrador en producción) */}
             {user && (
-              user.role === 'admin' || 
-              user.email?.toLowerCase() === 'josemanuelvillaguillon@gmail.com' ||
-              localStorage.getItem('b_is_super_admin') === 'true' ||
-              !isSupabaseConfigured
+              (!isSupabaseConfigured) || 
+              (user.email?.toLowerCase() === 'josemanuelvillaguillon@gmail.com')
             ) && (
               <div className="role-switcher-container">
                 <button
